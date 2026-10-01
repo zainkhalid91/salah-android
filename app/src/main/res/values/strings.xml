@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Salah</string>
+    <string name="widget_next_name">Next prayer</string>
+    <string name="widget_next_description">The next prayer, its time and a live countdown</string>
+    <string name="widget_today_name">Today\'s prayers</string>
+    <string name="widget_today_description">All of today\'s prayer times, with the next one highlighted</string>
+    <string name="channel_reminders">Prayer reminders</string>
+</resources>

@@ -1,0 +1,54 @@
+name: Android
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Publish a GitHub release with this tag (e.g. v1.0.0). Leave empty to only build."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Core tests
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon :core:test
+
+      - name: Build APK
+        run: |
+          ./gradlew --no-daemon assembleRelease
+          cp app/build/outputs/apk/release/app-release.apk Salah.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Salah-apk
+          path: Salah.apk
+
+      - name: Publish release
+        if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.release_tag }}
+          target_commitish: ${{ github.sha }}
+          name: Salah for Android ${{ inputs.release_tag }}
+          files: Salah.apk
+          body: |
+            Install `Salah.apk` on any Android 8.0+ phone (allow installs from your browser or file manager when asked).
