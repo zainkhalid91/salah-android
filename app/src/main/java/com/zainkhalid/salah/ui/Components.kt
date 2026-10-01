@@ -1,7 +1,7 @@
 package com.zainkhalid.salah.ui
 
-import androidx.compose.foundation.ExperimentalLayoutApi
-import androidx.compose.foundation.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
