@@ -82,3 +82,7 @@ The config is the same JSON file format as the macOS and Windows apps.
 - **Prayer calculation:** ported from [adhan-swift](https://github.com/batoulapps/adhan-swift) by Batoul Apps (MIT License). The notice is in `core/src/main/kotlin/salah/core/adhan/Adhan.kt`.
 - **Pixel font:** [Doto](https://github.com/oliverlalan/Doto), SIL Open Font License 1.1 (`docs/OFL-Doto.txt`)
 - **Location search:** [Open-Meteo](https://open-meteo.com/) geocoding and [BigDataCloud](https://www.bigdatacloud.com/) reverse geocoding
+
+## License
+
+MIT, see [LICENSE](LICENSE). The bundled Doto font keeps its own SIL Open Font License, and the adhan-swift port keeps its MIT notice.
