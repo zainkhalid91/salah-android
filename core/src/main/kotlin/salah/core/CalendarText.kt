@@ -75,7 +75,8 @@ object CalendarText {
     /** "Friday, 2 October 2026" in the locale's words and digits. */
     fun gregorian(date: LocalDate, locale: Locale): String {
         val lang = lang(locale)
-        return "${weekdayLong(date.dayOfWeek, locale)}, ${number(date.dayOfMonth, lang)} ${gregorianMonth(date.monthValue, locale)} ${number(date.year, lang)}"
+        val comma = if (lang.rtl) "،" else ","
+        return "${weekdayLong(date.dayOfWeek, locale)}$comma ${number(date.dayOfMonth, lang)} ${gregorianMonth(date.monthValue, locale)} ${number(date.year, lang)}"
     }
 
     fun event(e: IslamicEvent, lang: CalLang): String = EVENTS.getValue(e)[lang.ordinal]

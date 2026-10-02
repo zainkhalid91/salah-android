@@ -14,6 +14,14 @@ This is the Android edition of [Salah](https://github.com/primayudantra/salah) b
 - Tap a prayer to see its reminder, method and offset. Tap the date to look at any other day.
 - Hijri date, with Jumu'ah shown on Fridays.
 
+**Islamic calendar**
+- A month view in Hijri or Gregorian, with both dates in every day. Swipe between months.
+- Islamic days are marked: Islamic New Year, Ashura, Mawlid, Isra and Mi'raj, Shab-e-Barat, Ramadan, the last ten nights, Laylat al-Qadr, both Eids, the first ten days of Dhu al-Hijjah, Arafah, Tashreeq, and the white days.
+- A converter that works both ways: Hijri to Gregorian and Gregorian to Hijri.
+- Every Islamic date of the year with its Gregorian date and a countdown.
+- Follows the phone's language: English, Arabic, Urdu, Indonesian, Malay, Turkish or French, with local digits and a right-to-left layout for Arabic and Urdu.
+- Alerts for each new Islamic month and for special days, at Maghrib the evening before (when the Islamic day begins) or on the morning of the day.
+
 **Schedule**
 - The week or the month at a glance, with today highlighted.
 - Share the schedule as text.
@@ -27,6 +35,7 @@ This is the Android edition of [Salah](https://github.com/primayudantra/salah) b
 **Widgets**
 - **Next prayer** (2×2): the prayer and its time in dot matrix type, with a live countdown that keeps ticking without draining the battery.
 - **Today's prayers** (4×3): all six times, with the next one highlighted.
+- **Islamic calendar** (4×4): this month with today and the Islamic days marked, plus the next event.
 - Every widget has its own style. It can follow the app's colours, or use any of the 10 colours with a light, dark, coloured or glass background. Long-press a widget and choose Edit to change it.
 
 **Colours and theme**

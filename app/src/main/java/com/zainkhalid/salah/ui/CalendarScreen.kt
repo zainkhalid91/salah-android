@@ -441,7 +441,7 @@ private fun Converter(adj: Int, lang: CalLang, locale: Locale, onShow: (LocalDat
         }
         if (result != null) {
             Text(
-                CalendarText.text(CalKey.CALENDAR, lang) + " →",
+                CalendarText.text(CalKey.CALENDAR, lang) + if (lang.rtl) " ←" else " →",
                 color = c.accent,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
