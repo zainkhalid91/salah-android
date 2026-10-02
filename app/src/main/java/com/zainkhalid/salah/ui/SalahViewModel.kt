@@ -19,7 +19,7 @@ import salah.core.SalahConfig
 import salah.core.SavedLocation
 import java.time.LocalDate
 
-enum class Tab(val title: String) { TODAY("Today"), SCHEDULE("Schedule"), REMINDERS("Reminders"), SETTINGS("Settings") }
+enum class Tab(val title: String) { TODAY("Today"), CALENDAR("Calendar"), SCHEDULE("Schedule"), REMINDERS("Reminders"), SETTINGS("Settings") }
 
 class SalahViewModel(app: Application) : AndroidViewModel(app) {
     private val repo = app.repo

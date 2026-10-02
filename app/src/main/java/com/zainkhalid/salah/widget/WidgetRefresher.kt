@@ -25,6 +25,7 @@ object WidgetRefresher {
         runCatching {
             NextPrayerWidget().updateAll(context)
             TodayWidget().updateAll(context)
+            CalendarWidget().updateAll(context)
         }
         scheduleNextTick(context)
     }
@@ -33,7 +34,8 @@ object WidgetRefresher {
     private suspend fun scheduleNextTick(context: Context) {
         val manager = GlanceAppWidgetManager(context)
         val any = manager.getGlanceIds(NextPrayerWidget::class.java).isNotEmpty() ||
-            manager.getGlanceIds(TodayWidget::class.java).isNotEmpty()
+            manager.getGlanceIds(TodayWidget::class.java).isNotEmpty() ||
+            manager.getGlanceIds(CalendarWidget::class.java).isNotEmpty()
         if (!any) return
         val config = context.repo.config.value
         val location = config.location?.takeIf { it.isValid } ?: return

@@ -4,5 +4,7 @@
     <string name="widget_next_description">The next prayer, its time and a live countdown</string>
     <string name="widget_today_name">Today\'s prayers</string>
     <string name="widget_today_description">All of today\'s prayer times, with the next one highlighted</string>
+    <string name="widget_calendar_name">Islamic calendar</string>
+    <string name="widget_calendar_description">This month in Hijri and Gregorian dates, with Islamic days marked</string>
     <string name="channel_reminders">Prayer reminders</string>
 </resources>

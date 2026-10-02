@@ -155,6 +155,34 @@ data class ReminderSettings(
     }
 }
 
+/** Which calendar leads in the calendar view and widget. */
+@Serializable
+enum class PrimaryCalendar {
+    @SerialName("hijri") HIJRI,
+    @SerialName("gregorian") GREGORIAN;
+
+    val raw: String get() = serialName(this)
+}
+
+/** When Islamic date alerts fire. The Islamic day starts at Maghrib, so the default is the evening before. */
+@Serializable
+enum class IslamicAlertTime {
+    @SerialName("maghribBefore") MAGHRIB_BEFORE,
+    @SerialName("morning") MORNING;
+
+    val raw: String get() = serialName(this)
+}
+
+@Serializable
+data class CalendarSettings(
+    val primary: PrimaryCalendar = PrimaryCalendar.HIJRI,
+    val notifyNewMonth: Boolean = true,
+    val notifySpecialDays: Boolean = true,
+    /** 13th to 15th of each month, the sunnah fasting days. Off by default. */
+    val notifyWhiteDays: Boolean = false,
+    val alertTime: IslamicAlertTime = IslamicAlertTime.MAGHRIB_BEFORE,
+)
+
 /** The single shared configuration, read and written by both the app and the CLI. */
 @Serializable
 data class SalahConfig(
@@ -163,6 +191,7 @@ data class SalahConfig(
     val calculation: CalculationSettings = CalculationSettings(),
     val display: DisplaySettings = DisplaySettings(),
     val reminders: ReminderSettings = ReminderSettings(),
+    val calendar: CalendarSettings = CalendarSettings(),
     val launchAtLogin: Boolean = true,
 ) {
     val methodName: String get() = calculation.methodName(location)

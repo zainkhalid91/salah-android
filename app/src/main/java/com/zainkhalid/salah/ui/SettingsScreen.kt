@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zainkhalid.salah.data.AccentColor
+import com.zainkhalid.salah.widget.CalendarWidgetReceiver
 import com.zainkhalid.salah.widget.NextPrayerWidgetReceiver
 import com.zainkhalid.salah.widget.TodayWidgetReceiver
 import salah.core.CalculationSettings
@@ -98,6 +99,7 @@ fun SettingsScreen(vm: SalahViewModel, modifier: Modifier) {
         Panel(title = "WIDGETS") {
             SettingRow("Next prayer", "Big dot matrix time with a live countdown", onClick = { pinWidget(context, NextPrayerWidgetReceiver::class.java) })
             SettingRow("Today's prayers", "All six times, the next one highlighted", onClick = { pinWidget(context, TodayWidgetReceiver::class.java) })
+            SettingRow("Islamic calendar", "This month in Hijri and Gregorian, Islamic days marked", onClick = { pinWidget(context, CalendarWidgetReceiver::class.java) })
             Text(
                 "Each widget can follow the app's colours or use its own. Long press a widget and pick Edit to change it.",
                 color = c.secondary,

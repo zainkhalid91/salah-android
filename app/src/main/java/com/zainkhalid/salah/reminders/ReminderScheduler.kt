@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import androidx.core.content.edit
 import com.zainkhalid.salah.repo
+import salah.core.IslamicAlertPlanner
 import salah.core.NotificationPlanner
 import java.time.Instant
 import java.time.LocalTime
@@ -60,7 +61,19 @@ object ReminderScheduler {
             )
             setAlarm(context, n.fireDate.toEpochMilli(), pi)
         }
-        prefs.edit { putStringSet(KEY_IDS, plan.map { it.id }.toSet()) }
+        // Islamic dates, in the phone's language.
+        val locale = context.resources.configuration.locales[0] ?: java.util.Locale.getDefault()
+        val alerts = IslamicAlertPlanner.plan(now, config, locale)
+        for (a in alerts) {
+            val intent = remindIntent(context, a.id)
+                .putExtra(EXTRA_TITLE, a.title)
+                .putExtra(EXTRA_BODY, a.body)
+            val pi = PendingIntent.getBroadcast(
+                context, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+            setAlarm(context, a.fireDate.toEpochMilli(), pi)
+        }
+        prefs.edit { putStringSet(KEY_IDS, (plan.map { it.id } + alerts.map { it.id }).toSet()) }
 
         // Replan a minute after the next local midnight.
         val zone = config.location?.zone ?: java.time.ZoneId.systemDefault()

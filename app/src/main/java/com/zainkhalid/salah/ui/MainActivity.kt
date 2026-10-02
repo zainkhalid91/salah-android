@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
@@ -29,6 +30,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zainkhalid.salah.reminders.Notifications
+import salah.core.CalKey
+import salah.core.CalendarText
 import salah.core.ThemeSetting
 
 class MainActivity : ComponentActivity() {
@@ -75,14 +78,20 @@ private fun SalahRoot(vm: SalahViewModel) {
                             Icon(
                                 when (tab) {
                                     Tab.TODAY -> Icons.Filled.Home
-                                    Tab.SCHEDULE -> Icons.Filled.DateRange
+                                    Tab.CALENDAR -> Icons.Filled.DateRange
+                                    Tab.SCHEDULE -> Icons.Filled.List
                                     Tab.REMINDERS -> Icons.Filled.Notifications
                                     Tab.SETTINGS -> Icons.Filled.Settings
                                 },
                                 contentDescription = null,
                             )
                         },
-                        label = { Text(tab.title) },
+                        label = {
+                            Text(
+                                if (tab == Tab.CALENDAR) CalendarText.text(CalKey.CALENDAR, CalendarText.lang(calendarLocale())) else tab.title,
+                                maxLines = 1,
+                            )
+                        },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = c.onAccent,
                             indicatorColor = c.accent,
@@ -98,6 +107,7 @@ private fun SalahRoot(vm: SalahViewModel) {
         val modifier = Modifier.padding(padding)
         when (vm.tab) {
             Tab.TODAY -> TodayScreen(vm, modifier)
+            Tab.CALENDAR -> CalendarScreen(vm, modifier)
             Tab.SCHEDULE -> ScheduleScreen(vm, modifier)
             Tab.REMINDERS -> RemindersScreen(vm, modifier)
             Tab.SETTINGS -> SettingsScreen(vm, modifier)
