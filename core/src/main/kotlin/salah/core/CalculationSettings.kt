@@ -107,7 +107,6 @@ data class CalculationSettings(
         return m.displayName
     }
 
-    fun methodShortName(location: SavedLocation?): String = resolvedMethod(location).shortName
 
     internal fun adhanParameters(location: SavedLocation): CalculationParameters {
         val m = resolvedMethod(location)

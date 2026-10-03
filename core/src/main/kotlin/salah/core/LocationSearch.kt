@@ -77,7 +77,7 @@ object LocationSearch {
             (URL(url).openConnection() as HttpURLConnection).apply {
                 connectTimeout = 10_000
                 readTimeout = 15_000
-                setRequestProperty("User-Agent", "Salah/${SalahInfo.VERSION} (prayer times)")
+                setRequestProperty("User-Agent", "Salah for Android (github.com/zainkhalid91/salah-android)")
             }
         } catch (e: Exception) {
             throw LocationSearchException.Failed(e.message ?: "network unavailable")

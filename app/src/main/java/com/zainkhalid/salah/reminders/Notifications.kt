@@ -25,6 +25,7 @@ object Notifications {
         ReminderSound.CHIME -> "reminders_chime"
         ReminderSound.SILENT -> "reminders_silent"
     }
+    private const val AZAN_CHANNEL = "prayer_azan"
 
     fun createChannels(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -42,6 +43,11 @@ object Notifications {
             NotificationChannel(channelId(ReminderSound.CHIME), "$name (soft chime)", NotificationManager.IMPORTANCE_HIGH)
                 .apply { setSound(chime, attrs) },
         )
+        val azan = Uri.parse("${ContentResolver.SCHEME_ANDROID_RESOURCE}://${context.packageName}/${R.raw.salah_azan}")
+        nm.createNotificationChannel(
+            NotificationChannel(AZAN_CHANNEL, context.getString(R.string.channel_azan), NotificationManager.IMPORTANCE_HIGH)
+                .apply { setSound(azan, attrs) },
+        )
         nm.createNotificationChannel(
             NotificationChannel(channelId(ReminderSound.SILENT), "$name (silent)", NotificationManager.IMPORTANCE_DEFAULT)
                 .apply { setSound(null, null); enableVibration(false) },
@@ -52,13 +58,13 @@ object Notifications {
         Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
-    fun show(context: Context, id: String, title: String, body: String, sound: ReminderSound) {
+    fun show(context: Context, id: String, title: String, body: String, sound: ReminderSound, azan: Boolean = false) {
         if (!canPost(context)) return
         val open = PendingIntent.getActivity(
             context, 0, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val n = NotificationCompat.Builder(context, channelId(sound))
+        val n = NotificationCompat.Builder(context, if (azan) AZAN_CHANNEL else channelId(sound))
             .setSmallIcon(R.drawable.ic_stat_salah)
             .setColor(ContextCompat.getColor(context, R.color.crimson))
             .setContentTitle(title)

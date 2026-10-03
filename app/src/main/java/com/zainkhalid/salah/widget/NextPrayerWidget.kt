@@ -82,7 +82,7 @@ private fun NextPrayerContent(data: WidgetData) {
         if (state == null || location == null) {
             Text("SALAH", style = TextStyle(color = ColorProvider(c.secondary), fontSize = 11.sp, fontWeight = FontWeight.Bold))
             Spacer(GlanceModifier.height(6.dp))
-            Text("Open the app to set your location", style = TextStyle(color = ColorProvider(c.text), fontSize = 14.sp))
+            Text(data.tr("Open the app to set your location"), style = TextStyle(color = ColorProvider(c.text), fontSize = 14.sp))
             return@Column
         }
         val display = data.config.display
@@ -93,17 +93,17 @@ private fun NextPrayerContent(data: WidgetData) {
         val time: Instant?
         when {
             nowPrayer != null -> {
-                status = "NOW"
-                name = state.today.label(nowPrayer, display.jumuahRelabel)
+                status = data.tr("NOW")
+                name = state.today.label(nowPrayer, display.jumuahRelabel, data.lang)
                 time = state.today.time(nowPrayer)
             }
             next != null -> {
-                status = if (next.isTomorrow) "TOMORROW" else "NEXT PRAYER"
-                name = next.label(display.jumuahRelabel)
+                status = data.tr(if (next.isTomorrow) "TOMORROW" else "NEXT PRAYER")
+                name = next.label(display.jumuahRelabel, data.lang)
                 time = next.time
             }
             else -> {
-                status = "NEXT PRAYER"
+                status = data.tr("NEXT PRAYER")
                 name = "--"
                 time = null
             }
@@ -114,7 +114,7 @@ private fun NextPrayerContent(data: WidgetData) {
         val nameBitmap = PixelBitmap.render(context, name.uppercase(), (if (tall) 34f else 26f) * density, inner, c.text.toArgb())
         Image(ImageProvider(nameBitmap), contentDescription = name)
         if (time != null) {
-            val (t, period) = TimeFormatting.parts(time, location.zone, display.use24HourClock, padHour = true)
+            val (t, period) = TimeFormatting.parts(time, location.zone, display.use24HourClock, padHour = true, lang = data.lang)
             Row(verticalAlignment = Alignment.Bottom) {
                 val timeBitmap = PixelBitmap.render(context, t, (if (tall) 40f else 28f) * density, inner * 0.8f, c.text.toArgb())
                 Image(ImageProvider(timeBitmap), contentDescription = t)
@@ -127,7 +127,7 @@ private fun NextPrayerContent(data: WidgetData) {
             Spacer(GlanceModifier.height(4.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    if (nowPrayer != null) "STARTED " else "IN ",
+                    data.tr(if (nowPrayer != null) "STARTED" else "IN") + " ",
                     style = TextStyle(color = ColorProvider(c.secondary), fontSize = 12.sp, fontWeight = FontWeight.Bold),
                 )
                 AndroidRemoteViews(countdown(context, time, c.text.toArgb(), counting = nowPrayer == null))

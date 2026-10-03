@@ -106,7 +106,7 @@ class NotificationPlannerTest {
         val friday = Fixtures.date("2026-09-25T00:00:30+08:00")
         val plan = NotificationPlanner.plan(friday, Fixtures.config(Fixtures.singapore))
         val lead = plan.first { it.id == "salah.2026-09-25.dhuhr.10" }
-        assertEquals("Jumu'ah in 10 minutes", lead.title)
+        assertEquals("Jumuah in 10 minutes", lead.title)
         assertEquals("12:58 · Singapore", lead.body)
         assertEquals("Time for Asr", plan.first { it.id == "salah.2026-09-25.asr.0" }.title)
         val twelve = Fixtures.config(Fixtures.singapore).let { it.copy(display = it.display.copy(use24HourClock = false)) }

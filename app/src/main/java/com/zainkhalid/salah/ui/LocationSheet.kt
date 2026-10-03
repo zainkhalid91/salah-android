@@ -51,7 +51,7 @@ fun LocationSheet(vm: SalahViewModel) {
 
     ModalBottomSheet(onDismissRequest = { vm.showLocationSheet = false }, containerColor = c.background) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp).imePadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Location", color = c.text, fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
+            Text(tr("Location"), color = c.text, fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
             Button(
                 onClick = {
                     val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -62,22 +62,22 @@ fun LocationSheet(vm: SalahViewModel) {
             ) {
                 if (vm.locating) {
                     CircularProgressIndicator(Modifier.size(16.dp), color = c.onAccent, strokeWidth = 2.dp)
-                    Text("  Finding you…")
+                    Text("  " + tr("Finding you…"))
                 } else {
                     Icon(Icons.Filled.LocationOn, contentDescription = null)
-                    Text("  Use my location")
+                    Text("  " + tr("Use my location"))
                 }
             }
-            vm.locationMessage?.let { Text(it, color = c.secondary, fontSize = 13.sp) }
+            vm.locationMessage?.let { Text(tr(it), color = c.secondary, fontSize = 13.sp) }
 
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
-                label = { Text("Search for a city") },
+                label = { Text(tr("Search for a city")) },
                 singleLine = true,
                 trailingIcon = {
                     if (vm.searching) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                    else Icon(Icons.Filled.Search, contentDescription = "Search", modifier = Modifier.clickable { vm.search(query) })
+                    else Icon(Icons.Filled.Search, contentDescription = tr("Search"), modifier = Modifier.clickable { vm.search(query) })
                 },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { vm.search(query) }),

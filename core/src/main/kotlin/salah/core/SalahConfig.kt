@@ -42,7 +42,14 @@ data class DisplaySettings(
     /** On Windows: the notification-area (tray) icon. */
     val showMenuBarExtra: Boolean = true,
     val menuBarStyle: MenuBarStyle = MenuBarStyle.NAME_AND_COUNTDOWN,
+    /** App language. Null until the user picks one on first launch. */
+    val language: AppLanguage? = null,
+    /** Show Tahajjud, Ishraq, Duha, Zawal, Awwabin and midnight on the timeline. */
+    val showSunnahTimes: Boolean = true,
 ) {
+    /** The chosen language, English until one is picked. */
+    val lang: AppLanguage get() = language ?: AppLanguage.EN
+
     internal fun normalized() = copy(
         hijriAdjustment = hijriAdjustment.coerceIn(-2, 2),
         nowWindowMinutes = nowWindowMinutes.coerceIn(0, 60),
@@ -120,6 +127,8 @@ data class ReminderSettings(
     @SerialName("pausedUntil") val pausedUntilRaw: String? = null,
     val sound: ReminderSound = ReminderSound.SYSTEM_DEFAULT,
     val quietHours: QuietHours = QuietHours(),
+    /** Play the azan when each of the five prayers begins. Early reminders keep [sound]. */
+    val azan: Boolean = true,
     /** Keyed by [Prayer.raw] for the five prayers. */
     val prayers: Map<String, PrayerReminder> = DEFAULT_PRAYERS,
 ) {

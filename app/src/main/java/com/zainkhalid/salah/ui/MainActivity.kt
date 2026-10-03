@@ -23,15 +23,18 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zainkhalid.salah.reminders.Notifications
-import salah.core.CalKey
-import salah.core.CalendarText
+import salah.core.AppLanguage
 import salah.core.ThemeSetting
 
 class MainActivity : ComponentActivity() {
@@ -47,7 +50,13 @@ class MainActivity : ComponentActivity() {
                 ThemeSetting.LIGHT -> false
                 ThemeSetting.DARK -> true
             }
-            SalahTheme(accent, dark) { SalahRoot(vm) }
+            val lang = config.display.lang
+            CompositionLocalProvider(
+                LocalLang provides lang,
+                LocalLayoutDirection provides if (lang.rtl) LayoutDirection.Rtl else LayoutDirection.Ltr,
+            ) {
+                SalahTheme(accent, dark) { SalahRoot(vm) }
+            }
         }
     }
 }
@@ -56,6 +65,7 @@ class MainActivity : ComponentActivity() {
 private fun SalahRoot(vm: SalahViewModel) {
     val context = LocalContext.current
     val c = palette
+    val config by vm.config.collectAsStateWithLifecycle()
     val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !Notifications.canPost(context)) {
@@ -72,7 +82,10 @@ private fun SalahRoot(vm: SalahViewModel) {
                         selected = vm.tab == tab,
                         onClick = {
                             vm.tab = tab
-                            if (tab != Tab.TODAY) vm.detailPrayer = null
+                            if (tab != Tab.TODAY) {
+                                vm.detailPrayer = null
+                                vm.detailExtra = null
+                            }
                         },
                         icon = {
                             Icon(
@@ -87,10 +100,7 @@ private fun SalahRoot(vm: SalahViewModel) {
                             )
                         },
                         label = {
-                            Text(
-                                if (tab == Tab.CALENDAR) CalendarText.text(CalKey.CALENDAR, CalendarText.lang(calendarLocale())) else tab.title,
-                                maxLines = 1,
-                            )
+                            Text(tr(tab.title), maxLines = 1)
                         },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = c.onAccent,
@@ -114,4 +124,10 @@ private fun SalahRoot(vm: SalahViewModel) {
         }
     }
     if (vm.showLocationSheet) LocationSheet(vm)
+    if (config.display.language == null) {
+        val phone = LocalConfiguration.current.locales[0]?.language
+        LanguageDialog(if (phone == "ar") AppLanguage.AR else AppLanguage.EN) { picked ->
+            vm.update { it.copy(display = it.display.copy(language = picked)) }
+        }
+    }
 }

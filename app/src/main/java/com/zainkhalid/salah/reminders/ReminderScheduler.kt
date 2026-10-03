@@ -24,6 +24,7 @@ object ReminderScheduler {
     const val EXTRA_ID = "id"
     const val EXTRA_TITLE = "title"
     const val EXTRA_BODY = "body"
+    const val EXTRA_AZAN = "azan"
 
     private const val PREFS = "salah_alarms"
     private const val KEY_IDS = "ids"
@@ -56,14 +57,15 @@ object ReminderScheduler {
             val intent = remindIntent(context, n.id)
                 .putExtra(EXTRA_TITLE, n.title)
                 .putExtra(EXTRA_BODY, n.body)
+                .putExtra(EXTRA_AZAN, NotificationPlanner.playsAzan(n, config.reminders))
             val pi = PendingIntent.getBroadcast(
                 context, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
             setAlarm(context, n.fireDate.toEpochMilli(), pi)
         }
-        // Islamic dates, in the phone's language.
-        val locale = context.resources.configuration.locales[0] ?: java.util.Locale.getDefault()
-        val alerts = IslamicAlertPlanner.plan(now, config, locale)
+        // Islamic dates, in the app's language.
+        val phone = context.resources.configuration.locales[0] ?: java.util.Locale.getDefault()
+        val alerts = IslamicAlertPlanner.plan(now, config, config.display.lang.locale(phone))
         for (a in alerts) {
             val intent = remindIntent(context, a.id)
                 .putExtra(EXTRA_TITLE, a.title)

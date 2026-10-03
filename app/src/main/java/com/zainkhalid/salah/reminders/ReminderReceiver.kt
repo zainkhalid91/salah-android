@@ -8,6 +8,7 @@ import com.zainkhalid.salah.widget.WidgetRefresher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import salah.core.ReminderSound
 
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -16,7 +17,9 @@ class ReminderReceiver : BroadcastReceiver() {
                 val id = intent.getStringExtra(ReminderScheduler.EXTRA_ID) ?: return
                 val title = intent.getStringExtra(ReminderScheduler.EXTRA_TITLE) ?: return
                 val body = intent.getStringExtra(ReminderScheduler.EXTRA_BODY).orEmpty()
-                Notifications.show(context, id, title, body, context.repo.config.value.reminders.sound)
+                val reminders = context.repo.config.value.reminders
+                val azan = intent.getBooleanExtra(ReminderScheduler.EXTRA_AZAN, false) && reminders.azan && reminders.sound != ReminderSound.SILENT
+                Notifications.show(context, id, title, body, reminders.sound, azan)
             }
             ReminderScheduler.ACTION_REPLAN -> {
                 ReminderScheduler.reschedule(context)

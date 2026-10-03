@@ -65,9 +65,11 @@ object CalendarText {
     fun weekdayLong(day: DayOfWeek, locale: Locale): String =
         day.getDisplayName(TextStyle.FULL, locale).replaceFirstChar { it.titlecase(locale) }
 
-    /** "12 Ramadan 1448 AH" */
-    fun hijri(h: HijriDate, lang: CalLang): String =
-        "${number(h.day, lang)} ${hijriMonth(h.month, lang)} ${number(h.year, lang)} ${ERA.getValue(lang)}"
+    /** "12 Ramadan 1448 AH", or "12 Ramadan (9) 1448 AH" with the month number. */
+    fun hijri(h: HijriDate, lang: CalLang, monthNumber: Boolean = false): String {
+        val month = hijriMonth(h.month, lang) + if (monthNumber) " (${number(h.month, lang)})" else ""
+        return "${number(h.day, lang)} $month ${number(h.year, lang)} ${ERA.getValue(lang)}"
+    }
 
     /** "Rajab 1448" */
     fun hijriMonthYear(year: Int, month: Int, lang: CalLang): String = "${hijriMonth(month, lang)} ${number(year, lang)}"

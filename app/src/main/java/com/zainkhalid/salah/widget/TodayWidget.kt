@@ -30,6 +30,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.zainkhalid.salah.ui.MainActivity
+import salah.core.AppText
 import salah.core.Prayer
 import salah.core.TimeFormatting
 
@@ -69,7 +70,7 @@ private fun TodayContent(data: WidgetData) {
         val state = data.state
         val location = data.config.location
         if (state == null || location == null) {
-            Text("Open Salah to set your location", style = TextStyle(color = ColorProvider(c.text), fontSize = 14.sp))
+            Text(data.tr("Open Salah to set your location"), style = TextStyle(color = ColorProvider(c.text), fontSize = 14.sp))
             return@Column
         }
         val display = data.config.display
@@ -78,7 +79,7 @@ private fun TodayContent(data: WidgetData) {
         Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(GlanceModifier.defaultWeight()) {
                 Text(
-                    TimeFormatting.longDate(today.date, includeYear = false).uppercase(),
+                    AppText.longDate(today.date, data.lang).uppercase(),
                     maxLines = 1,
                     style = TextStyle(color = ColorProvider(c.text), fontSize = 13.sp, fontWeight = FontWeight.Bold),
                 )
@@ -96,7 +97,7 @@ private fun TodayContent(data: WidgetData) {
             val isNext = p == nextPrayer
             val isNow = p == state.nowPrayer
             val t = today.time(p)
-            val label = today.label(p, display.jumuahRelabel)
+            val label = today.label(p, display.jumuahRelabel, data.lang)
             val fg = if (isNext) c.onHighlight else if (p == Prayer.SUNRISE) c.secondary else c.text
             Row(
                 GlanceModifier
@@ -108,13 +109,13 @@ private fun TodayContent(data: WidgetData) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    if (isNow) "$label  now" else label,
+                    if (isNow) "$label  ${data.tr("now")}" else label,
                     maxLines = 1,
                     style = TextStyle(color = ColorProvider(fg), fontSize = 13.sp, fontWeight = if (isNext) FontWeight.Bold else FontWeight.Medium),
                 )
                 Spacer(GlanceModifier.defaultWeight())
                 Text(
-                    t?.let { TimeFormatting.clock(it, today.zone, display.use24HourClock) } ?: "--:--",
+                    t?.let { TimeFormatting.clock(it, today.zone, display.use24HourClock, lang = data.lang) } ?: "--:--",
                     maxLines = 1,
                     style = TextStyle(color = ColorProvider(fg), fontSize = 13.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace),
                 )

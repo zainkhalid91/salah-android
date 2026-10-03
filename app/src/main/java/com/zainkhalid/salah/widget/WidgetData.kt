@@ -4,6 +4,8 @@ import android.content.Context
 import com.zainkhalid.salah.data.AccentColor
 import com.zainkhalid.salah.repo
 import com.zainkhalid.salah.ui.isDark
+import salah.core.AppLanguage
+import salah.core.AppText
 import salah.core.HijriDate
 import salah.core.PrayerClock
 import salah.core.PrayerClockState
@@ -19,7 +21,11 @@ class WidgetData(
     val style: WidgetStyle,
 ) {
     val hijri: String?
-        get() = state?.let { HijriDate.of(it.today.date, config.display.hijriAdjustment).formatted }
+        get() = state?.let { AppText.hijri(HijriDate.of(it.today.date, config.display.hijriAdjustment), lang) }
+
+    val lang: AppLanguage get() = config.display.lang
+
+    fun tr(en: String): String = AppText.t(lang, en)
 
     companion object {
         fun load(context: Context, appWidgetId: Int): WidgetData {

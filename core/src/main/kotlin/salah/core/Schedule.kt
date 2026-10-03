@@ -24,15 +24,6 @@ val LocalDate.isFriday: Boolean get() = dayOfWeek == DayOfWeek.FRIDAY
 /** The local calendar day containing [instant] in [zone]. */
 fun localDate(instant: Instant, zone: ZoneId): LocalDate = instant.atZone(zone).toLocalDate()
 
-fun LocalDate.startOfDay(zone: ZoneId): Instant = atStartOfDay(zone).toInstant()
-
-/** Parses "YYYY-MM-DD", rejecting impossible dates like 2026-02-30. */
-fun parseLocalDate(s: String): LocalDate? =
-    if (Regex("""\d{1,4}-\d{1,2}-\d{1,2}""").matches(s)) {
-        val (y, m, d) = s.split("-").map { it.toInt() }
-        runCatching { LocalDate.of(y, m, d) }.getOrNull()
-    } else null
-
 // endregion
 
 /**
@@ -40,16 +31,10 @@ fun parseLocalDate(s: String): LocalDate? =
  * adjustment for local moon sighting. The Hijri day does not roll over at Maghrib.
  */
 data class HijriDate(val day: Int, val month: Int, val year: Int) {
-    val monthName: String get() = MONTH_NAMES[month - 1]
-
     /** e.g. "12 Rabi' al-Awwal 1448" */
-    val formatted: String get() = "$day $monthName $year"
+    val formatted: String get() = "$day ${CalendarText.hijriMonth(month, CalLang.EN)} $year"
 
     companion object {
-        val MONTH_NAMES = listOf(
-            "Muharram", "Safar", "Rabi' al-Awwal", "Rabi' al-Thani", "Jumada al-Ula", "Jumada al-Akhirah",
-            "Rajab", "Sha'ban", "Ramadan", "Shawwal", "Dhu al-Qa'dah", "Dhu al-Hijjah",
-        )
 
         fun of(date: LocalDate, adjustment: Int = 0): HijriDate {
             val h = HijrahDate.from(date.plusDays(adjustment.coerceIn(-2, 2).toLong()))
@@ -67,6 +52,8 @@ data class DaySchedule(
     val zone: ZoneId,
     val times: Map<Prayer, Instant>,
     val methodName: String,
+    /** Solar noon, for the zawal time. */
+    val noon: Instant? = null,
 ) {
     fun time(prayer: Prayer): Instant? = times[prayer]
 
@@ -78,18 +65,18 @@ data class DaySchedule(
     val hasUndefined: Boolean get() = undefined.isNotEmpty()
 
     /** Why times are missing, and what the user can do. Null when every time is defined. */
-    val undefinedExplanation: Pair<String, String?>?
-        get() {
-            if (!hasUndefined) return null
-            if (times.isEmpty()) {
-                return "The sun doesn't rise or set here on this date, so prayer times can't be calculated. Salah never invents a time." to
-                    "Follow a nearby city or your local authority's timetable for these days."
-            }
-            val names = undefined.joinToString(" and ") { it.displayName }
-            return "$names can't be calculated here on this date." to "Choose a high-latitude rule in Settings."
+    fun undefinedExplanation(lang: AppLanguage = AppLanguage.EN): Pair<String, String?>? {
+        if (!hasUndefined) return null
+        if (times.isEmpty()) {
+            return AppText.t(lang, "The sun doesn't rise or set here on this date, so prayer times can't be calculated. Salah never invents a time.") to
+                AppText.t(lang, "Follow a nearby city or your local authority's timetable for these days.")
         }
+        val names = undefined.map { AppText.t(lang, it.displayName) }.reduce { a, b -> AppText.t(lang, "{0} and {1}", a, b) }
+        return AppText.t(lang, "{0} can't be calculated here on this date.", names) to AppText.t(lang, "Choose a high-latitude rule in Settings.")
+    }
 
-    fun label(prayer: Prayer, jumuahRelabel: Boolean): String = prayer.label(isFriday, jumuahRelabel)
+    fun label(prayer: Prayer, jumuahRelabel: Boolean, lang: AppLanguage = AppLanguage.EN): String =
+        prayer.label(isFriday, jumuahRelabel, lang)
 }
 
 object PrayerSchedule {
@@ -102,7 +89,7 @@ object PrayerSchedule {
             Prayer.FAJR to pt.fajr, Prayer.SUNRISE to pt.sunrise, Prayer.DHUHR to pt.dhuhr,
             Prayer.ASR to pt.asr, Prayer.MAGHRIB to pt.maghrib, Prayer.ISHA to pt.isha,
         )
-        return DaySchedule(date, location.zone, times, settings.methodName(location))
+        return DaySchedule(date, location.zone, times, settings.methodName(location), pt?.noon)
     }
 
     /** Consecutive days starting at [start]. */
@@ -119,10 +106,11 @@ data class NextPrayer(
     val time: Instant,
     /** True when the next prayer falls on a following local day (e.g. after Isha). */
     val isTomorrow: Boolean,
-    /** The local day the prayer belongs to; used for the Jumu'ah label. */
+    /** The local day the prayer belongs to; used for the Jumuah label. */
     val date: LocalDate,
 ) {
-    fun label(jumuahRelabel: Boolean): String = prayer.label(date.isFriday, jumuahRelabel)
+    fun label(jumuahRelabel: Boolean, lang: AppLanguage = AppLanguage.EN): String =
+        prayer.label(date.isFriday, jumuahRelabel, lang)
 
     fun secondsRemaining(now: Instant): Double = maxOf(0.0, (time.toEpochMilli() - now.toEpochMilli()) / 1000.0)
 }
@@ -163,8 +151,6 @@ data class PrayerClockState(
     /** Set while inside the NOW window after a prayer starts. */
     val nowPrayer: Prayer?,
 ) {
-    val secondsToNext: Double? get() = next?.secondsRemaining(now)
-
     /** Seconds since [nowPrayer] began. */
     val secondsSinceNow: Double?
         get() {

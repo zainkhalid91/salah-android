@@ -41,7 +41,8 @@ object NotificationPlanner {
                 val reminder = r.reminder(prayer)
                 val time = schedule.time(prayer)
                 if (!reminder.enabled || time == null) continue
-                val label = schedule.label(prayer, config.display.jumuahRelabel)
+                val lang = config.display.lang
+                val label = schedule.label(prayer, config.display.jumuahRelabel, lang)
                 for (lead in reminder.leads) {
                     val fire = time.minusSeconds(lead * 60L)
                     if (fire <= now) continue
@@ -52,8 +53,8 @@ object NotificationPlanner {
                     out += PlannedNotification(
                         id = identifier(schedule.date, prayer, lead),
                         fireDate = fire, prayer = prayer, prayerTime = time, leadMinutes = lead, date = schedule.date,
-                        title = title(label, lead),
-                        body = body(time, location, config.display.use24HourClock),
+                        title = title(label, lead, lang),
+                        body = body(time, location, config.display.use24HourClock, lang),
                     )
                 }
             }
@@ -61,10 +62,15 @@ object NotificationPlanner {
         return out.sortedWith(compareBy<PlannedNotification> { it.fireDate }.thenBy { it.id }).take(MAX_PENDING)
     }
 
+    /** The at-time reminder of a prayer plays the azan, unless reminders are silent. */
+    fun playsAzan(n: PlannedNotification, reminders: ReminderSettings): Boolean =
+        n.leadMinutes == 0 && n.prayer.isPrayer && reminders.azan && reminders.sound != ReminderSound.SILENT
+
     /** "Asr in 10 minutes" or "Time for Asr". */
-    fun title(label: String, leadMinutes: Int): String = if (leadMinutes > 0) "$label in $leadMinutes minutes" else "Time for $label"
+    fun title(label: String, leadMinutes: Int, lang: AppLanguage = AppLanguage.EN): String =
+        if (leadMinutes > 0) AppText.t(lang, "{0} in {1} minutes", label, leadMinutes) else AppText.t(lang, "Time for {0}", label)
 
     /** "4:05 PM · Singapore" */
-    fun body(time: Instant, location: SavedLocation, use24Hour: Boolean): String =
-        "${TimeFormatting.clock(time, location.zone, use24Hour)} · ${location.name}"
+    fun body(time: Instant, location: SavedLocation, use24Hour: Boolean, lang: AppLanguage = AppLanguage.EN): String =
+        "${TimeFormatting.clock(time, location.zone, use24Hour, lang = lang)} · ${location.name}"
 }

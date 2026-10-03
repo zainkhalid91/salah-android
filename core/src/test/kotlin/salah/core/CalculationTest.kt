@@ -117,7 +117,7 @@ class CalculationTest {
         val s = PrayerSchedule.forDate(LocalDate.of(2026, 6, 21), Fixtures.tromso, CalculationSettings())
         assertTrue(s.times.isEmpty())
         assertEquals(Prayer.entries.toList(), s.undefined)
-        assertNotNull(s.undefinedExplanation)
+        assertNotNull(s.undefinedExplanation())
         assertNull(NextPrayerResolver.resolve(Fixtures.date("2026-06-21T12:00:00+02:00"), Fixtures.tromso, CalculationSettings()))
     }
 

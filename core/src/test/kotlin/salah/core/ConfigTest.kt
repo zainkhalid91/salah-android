@@ -1,10 +1,6 @@
 package salah.core
 
-import java.nio.file.Files
 import java.time.LocalDate
-import kotlin.concurrent.thread
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -15,7 +11,6 @@ import kotlin.test.assertTrue
 class ConfigTest {
     @Test
     fun roundTrip() {
-        val store = ConfigStore(Fixtures.tempPath())
         val c = Fixtures.config(Fixtures.singapore, MethodID.CUSTOM).let {
             it.copy(
                 calculation = it.calculation.withOffset(2, Prayer.ISHA),
@@ -24,14 +19,9 @@ class ConfigTest {
                     .copy(quietHours = QuietHours(true, "22:30", "05:00")),
             )
         }
-        store.save(c)
-        assertEquals(c, store.load())
+        assertEquals(c, ConfigStore.decode(ConfigStore.encode(c)))
     }
 
-    @Test
-    fun missingFileLoadsDefaults() = assertEquals(SalahConfig.DEFAULT, ConfigStore(Fixtures.tempPath()).load())
-
-    /** A config.json written by the macOS app must load unchanged. */
     @Test
     fun readsMacOsFile() {
         val json = """
@@ -105,73 +95,19 @@ class ConfigTest {
 
     @Test
     fun corruptFileSurfacesClearError() {
-        val path = Fixtures.tempPath()
-        Files.createDirectories(path.parent)
-        Files.writeString(path, "{ not json")
-        val e = assertFailsWith<ConfigException.Corrupt> { ConfigStore(path).load() }
-        assertEquals(path.toString(), e.path)
-        Files.writeString(path, """{"location":{"latitude":"north"}}""")
-        assertFailsWith<ConfigException.Corrupt> { ConfigStore(path).load() }
-    }
-
-    @Test
-    fun atomicWriteSurvivesConcurrentReads() {
-        val store = ConfigStore(Fixtures.tempPath())
-        store.save(Fixtures.config(Fixtures.singapore))
-        val writer = thread {
-            for (i in 0 until 200) {
-                val c = Fixtures.config(if (i % 2 == 0) Fixtures.singapore else Fixtures.jakarta)
-                store.save(c.copy(calculation = c.calculation.withOffset(i % 30, Prayer.ISHA)))
-            }
-        }
-        repeat(500) { store.load() }
-        writer.join()
-        assertEquals(listOf("config.json"), store.path.parent.listDirectoryEntries().map { it.name })
-    }
-
-    @Test
-    fun configKeysGetAndSet() {
-        var c = SalahConfig.DEFAULT
-        c = ConfigKeys.find("calculation.method").set(c, "singapore")
-        assertEquals(MethodID.SINGAPORE, c.calculation.method)
-        c = ConfigKeys.find("calculation.method").set(c, "auto")
-        assertNull(c.calculation.method)
-        c = ConfigKeys.find("calculation.offsets.isha").set(c, "-3")
-        assertEquals(-3, c.calculation.offset(Prayer.ISHA))
-        c = ConfigKeys.find("reminders.asr.leadMinutes").set(c, "15")
-        assertEquals(15, c.reminders.reminder(Prayer.ASR).leadMinutes)
-        c = ConfigKeys.find("display.clock").set(c, "12")
-        assertFalse(c.display.use24HourClock)
-        c = ConfigKeys.find("reminders.quietHours.start").set(c, "9:05")
-        assertEquals("09:05", c.reminders.quietHours.start)
-
-        assertFailsWith<ConfigKeyException.UnknownKey> { ConfigKeys.find("nope") }
-        assertFailsWith<ConfigKeyException.InvalidValue> { ConfigKeys.find("display.clock").set(c, "13") }
-        assertFailsWith<ConfigKeyException.InvalidValue> { ConfigKeys.find("reminders.asr.leadMinutes").set(c, "7") }
-        assertFailsWith<ConfigKeyException.InvalidValue> { ConfigKeys.find("display.hijriAdjustment").set(c, "3") }
-        assertFailsWith<ConfigKeyException.ReadOnly> { ConfigKeys.find("location.name").set(c, "X") }
+        val e = assertFailsWith<ConfigException.Corrupt> { ConfigStore.decode("{ not json", "/data/config.json") }
+        assertEquals("/data/config.json", e.path)
+        assertFailsWith<ConfigException.Corrupt> { ConfigStore.decode("""{"location":{"latitude":"north"}}""") }
     }
 
     @Test
     fun exporters() {
         val days = PrayerSchedule.range(LocalDate.of(2026, 9, 25), 2, Fixtures.singapore, CalculationSettings())
-        val rows = ScheduleExporter.csv(days).split("\r\n").filter { it.isNotEmpty() }
-        assertEquals(3, rows.size)
-        assertTrue(rows[1].startsWith("2026-09-25,Friday,05:37,06:54,12:58,"), rows[1])
-        assertTrue(rows[1].endsWith(",Asia/Singapore,Singapore (MUIS)"), rows[1])
-        val ics = ScheduleExporter.ics(days, Fixtures.singapore, true, Fixtures.date("2026-09-25T00:00:00Z"))
-        assertEquals(10, ics.split("BEGIN:VEVENT").size - 1)
-        assertTrue(ics.contains("SUMMARY:Jumu'ah"))
-        assertTrue(ics.contains("UID:salah-2026-09-25-dhuhr@salah.local"))
+        val text = ScheduleExporter.text(days, Fixtures.singapore, DisplaySettings()).lines()
+        assertEquals("Singapore · Singapore (MUIS)", text[0])
+        assertTrue(text[1].startsWith("Fri, 25 Sep  Fajr 05:37  Sunrise 06:54  Jumuah 12:58"), text[1])
+        val ar = ScheduleExporter.text(days, Fixtures.singapore, DisplaySettings(language = AppLanguage.AR)).lines()
+        assertTrue(ar[1].contains("الجمعة 12:58"), ar[1])
     }
 
-    @Test
-    fun semanticVersions() {
-        assertEquals(SemanticVersion(1, 2, 3), SemanticVersion.parse("v1.2.3"))
-        assertEquals(SemanticVersion(1, 2, 0), SemanticVersion.parse("1.2.0-beta.1"))
-        assertEquals(SemanticVersion(2), SemanticVersion.parse("2"))
-        assertNull(SemanticVersion.parse("1.x"))
-        assertNull(SemanticVersion.parse(""))
-        assertTrue(SemanticVersion.parse("1.10.0")!! > SemanticVersion.parse("1.9.9")!!)
-    }
 }

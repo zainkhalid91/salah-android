@@ -53,7 +53,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -81,9 +80,9 @@ import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
-/** Locale of the phone, so the calendar speaks the user's language. */
+/** The app's language, so the calendar matches the rest of the app. */
 @Composable
-fun calendarLocale(): Locale = LocalConfiguration.current.locales[0] ?: Locale.getDefault()
+fun calendarLocale(): Locale = appLocale()
 
 /** Pixel font for Latin digits; Arabic script falls back to a bold system face. */
 fun calendarNumberStyle(lang: CalLang, size: Float): TextStyle =
@@ -370,7 +369,7 @@ private fun SelectedDay(date: LocalDate, adj: Int, today: LocalDate, lang: CalLa
             )
             if (rel != 0L) Text(CalendarText.relative(rel, lang), color = c.onTimelineDim, fontSize = 12.sp)
         }
-        Text(CalendarText.hijri(day.hijri, lang), color = c.onTimeline, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp))
+        Text(CalendarText.hijri(day.hijri, lang, monthNumber = true), color = c.onTimeline, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp))
         Text(CalendarText.gregorian(date, locale), color = c.onTimelineDim, fontSize = 14.sp, modifier = Modifier.padding(top = 2.dp))
         Spacer(Modifier.height(12.dp))
         val names = day.events.map { CalendarText.event(it, lang) } + if (day.whiteDay) listOf(CalendarText.text(CalKey.WHITE_DAYS, lang)) else emptyList()

@@ -11,21 +11,16 @@ enum class Prayer(val raw: String, val displayName: String) {
 
     val isPrayer: Boolean get() = this != SUNRISE
 
-    /** Display label, relabelling Dhuhr as Jumu'ah on Fridays when enabled. */
-    fun label(isFriday: Boolean, jumuahRelabel: Boolean): String =
-        if (this == DHUHR && isFriday && jumuahRelabel) "Jumu'ah" else displayName
+    /** Display label, relabelling Dhuhr as Jumuah on Fridays when enabled. */
+    fun label(isFriday: Boolean, jumuahRelabel: Boolean, lang: AppLanguage = AppLanguage.EN): String =
+        AppText.t(lang, if (this == DHUHR && isFriday && jumuahRelabel) JUMUAH else displayName)
 
     companion object {
+        const val JUMUAH = "Jumuah"
+
         /** The five obligatory prayers, in order. */
         val prayers: List<Prayer> = listOf(FAJR, DHUHR, ASR, MAGHRIB, ISHA)
 
         fun fromRaw(raw: String): Prayer? = entries.firstOrNull { it.raw == raw }
-
-        /** Case-insensitive lookup that also accepts "jumuah"/"jumu'ah" for Dhuhr. */
-        fun fromName(name: String): Prayer? {
-            val key = name.lowercase().replace("'", "")
-            if (key == "jumuah" || key == "jummah") return DHUHR
-            return fromRaw(key)
-        }
     }
 }

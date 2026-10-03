@@ -136,6 +136,8 @@ class PrayerTimes private constructor(
     val asr: Instant,
     val maghrib: Instant,
     val isha: Instant,
+    /** Solar noon (zawal), without any adjustment. */
+    val noon: Instant,
 ) {
     companion object {
         fun compute(coordinates: Coordinates, date: LocalDate, params: CalculationParameters): PrayerTimes? {
@@ -194,6 +196,7 @@ class PrayerTimes private constructor(
                 asr = finish(asr, a.asr, ma.asr),
                 maghrib = finish(maghrib!!, a.maghrib, ma.maghrib),
                 isha = finish(isha, a.isha, ma.isha),
+                noon = finish(dhuhr, 0, 0),
             )
         }
 

@@ -27,6 +27,7 @@ import com.zainkhalid.salah.data.AccentColor
 import com.zainkhalid.salah.widget.CalendarWidgetReceiver
 import com.zainkhalid.salah.widget.NextPrayerWidgetReceiver
 import com.zainkhalid.salah.widget.TodayWidgetReceiver
+import salah.core.AppLanguage
 import salah.core.CalculationSettings
 import salah.core.DisplaySettings
 import salah.core.HighLatitudeSetting
@@ -51,25 +52,34 @@ fun SettingsScreen(vm: SalahViewModel, modifier: Modifier) {
             .verticalScroll(rememberScrollState()).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        Text("Settings", color = c.text, fontSize = 26.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 4.dp))
+        Text(tr("Settings"), color = c.text, fontSize = 26.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 4.dp))
 
-        Panel(title = "LOCATION") {
+        Panel(title = tr("LANGUAGE")) {
+            Segmented(
+                options = AppLanguage.entries.map { it to it.nativeName },
+                selected = d.lang,
+                onSelect = { l -> display { it.copy(language = l) } },
+                modifier = Modifier.padding(vertical = 12.dp),
+            )
+        }
+
+        Panel(title = tr("LOCATION")) {
             val loc = config.location
             SettingRow(
-                loc?.name ?: "No location set",
-                loc?.let { "${it.timeZone} · ${it.coordinateDescription}" } ?: "Tap to set your location",
+                loc?.name ?: tr("No location set"),
+                loc?.let { "${it.timeZone} · ${it.coordinateDescription}" } ?: tr("Tap to set your location"),
                 onClick = { vm.showLocationSheet = true },
             )
         }
 
-        Panel(title = "APPEARANCE") {
-            Text("Theme", color = c.text, fontSize = 15.sp, modifier = Modifier.padding(top = 12.dp, bottom = 8.dp))
+        Panel(title = tr("APPEARANCE")) {
+            Text(tr("Theme"), color = c.text, fontSize = 15.sp, modifier = Modifier.padding(top = 12.dp, bottom = 8.dp))
             Segmented(
-                options = listOf(ThemeSetting.SYSTEM to "System", ThemeSetting.LIGHT to "Light", ThemeSetting.DARK to "Dark"),
+                options = listOf(ThemeSetting.SYSTEM to tr("System"), ThemeSetting.LIGHT to tr("Light"), ThemeSetting.DARK to tr("Dark")),
                 selected = d.theme,
                 onSelect = { t -> display { it.copy(theme = t) } },
             )
-            Text("Colour", color = c.text, fontSize = 15.sp, modifier = Modifier.padding(top = 16.dp, bottom = 10.dp))
+            Text(tr("Colour"), color = c.text, fontSize = 15.sp, modifier = Modifier.padding(top = 16.dp, bottom = 10.dp))
             ColorSwatches(
                 options = AccentColor.available,
                 selected = accent,
@@ -77,18 +87,23 @@ fun SettingsScreen(vm: SalahViewModel, modifier: Modifier) {
                 onSelect = { if (it != null) vm.setAccent(it) },
             )
             Column(Modifier.padding(top = 8.dp)) {
-                SwitchRow("24-hour clock", d.use24HourClock) { on -> display { it.copy(use24HourClock = on) } }
-                SwitchRow("Show Jumu'ah on Fridays", d.jumuahRelabel) { on -> display { it.copy(jumuahRelabel = on) } }
-                SettingRow("Hijri date adjustment", "For local moon sighting") {
+                SwitchRow(tr("24-hour clock"), d.use24HourClock) { on -> display { it.copy(use24HourClock = on) } }
+                SwitchRow(tr("Show Jumuah on Fridays"), d.jumuahRelabel) { on -> display { it.copy(jumuahRelabel = on) } }
+                SwitchRow(
+                    tr("Sunnah prayers"),
+                    d.showSunnahTimes,
+                    tr("Tahajjud, Ishraq, Duha, Zawal, Awwabin and midnight on the timeline"),
+                ) { on -> display { it.copy(showSunnahTimes = on) } }
+                SettingRow(tr("Hijri date adjustment"), tr("For local moon sighting")) {
                     Stepper(
                         value = if (d.hijriAdjustment > 0) "+${d.hijriAdjustment}" else "${d.hijriAdjustment}",
                         onMinus = { display { it.copy(hijriAdjustment = (it.hijriAdjustment - 1).coerceAtLeast(-2)) } },
                         onPlus = { display { it.copy(hijriAdjustment = (it.hijriAdjustment + 1).coerceAtMost(2)) } },
                     )
                 }
-                SettingRow("Show NOW for", "After a prayer starts") {
+                SettingRow(tr("Show NOW for"), tr("After a prayer starts")) {
                     Stepper(
-                        value = "${d.nowWindowMinutes} min",
+                        value = tr("{0} min", d.nowWindowMinutes),
                         onMinus = { display { it.copy(nowWindowMinutes = (it.nowWindowMinutes - 5).coerceAtLeast(0)) } },
                         onPlus = { display { it.copy(nowWindowMinutes = (it.nowWindowMinutes + 5).coerceAtMost(60)) } },
                     )
@@ -96,53 +111,53 @@ fun SettingsScreen(vm: SalahViewModel, modifier: Modifier) {
             }
         }
 
-        Panel(title = "WIDGETS") {
-            SettingRow("Next prayer", "Big dot matrix time with a live countdown", onClick = { pinWidget(context, NextPrayerWidgetReceiver::class.java) })
-            SettingRow("Today's prayers", "All six times, the next one highlighted", onClick = { pinWidget(context, TodayWidgetReceiver::class.java) })
-            SettingRow("Islamic calendar", "This month in Hijri and Gregorian, Islamic days marked", onClick = { pinWidget(context, CalendarWidgetReceiver::class.java) })
+        Panel(title = tr("WIDGETS")) {
+            SettingRow(tr("Next prayer"), tr("Big dot matrix time with a live countdown"), onClick = { pinWidget(context, NextPrayerWidgetReceiver::class.java) })
+            SettingRow(tr("Today's prayers"), tr("All six times, the next one highlighted"), onClick = { pinWidget(context, TodayWidgetReceiver::class.java) })
+            SettingRow(tr("Islamic calendar"), tr("This month in Hijri and Gregorian, Islamic days marked"), onClick = { pinWidget(context, CalendarWidgetReceiver::class.java) })
             Text(
-                "Each widget can follow the app's colours or use its own. Long press a widget and pick Edit to change it.",
+                tr("Each widget can follow the app's colours or use its own. Long press a widget and pick Edit to change it."),
                 color = c.secondary,
                 fontSize = 12.sp,
                 modifier = Modifier.padding(bottom = 12.dp),
             )
         }
 
-        Panel(title = "CALCULATION") {
+        Panel(title = tr("CALCULATION")) {
             DropdownRow(
-                "Method",
-                listOf<MethodID?>(null).map { it to "Automatic (${MethodID.automatic(config.location).displayName})" } +
-                    MethodID.entries.map { it to it.displayName },
+                tr("Method"),
+                listOf<MethodID?>(null).map { it to tr("Automatic ({0})", tr(MethodID.automatic(config.location).displayName)) } +
+                    MethodID.entries.map { it to tr(it.displayName) },
                 calculation.method,
             ) { m -> calc { it.copy(method = m) } }
             if (calculation.resolvedMethod(config.location) == MethodID.CUSTOM) {
-                SettingRow("Fajr angle") {
+                SettingRow(tr("Fajr angle")) {
                     Stepper("${CalculationSettings.angle(calculation.customFajrAngle)}°",
                         { calc { it.copy(customFajrAngle = (it.customFajrAngle - 0.5).coerceAtLeast(10.0)) } },
                         { calc { it.copy(customFajrAngle = (it.customFajrAngle + 0.5).coerceAtMost(25.0)) } })
                 }
-                SettingRow("Isha angle") {
+                SettingRow(tr("Isha angle")) {
                     Stepper("${CalculationSettings.angle(calculation.customIshaAngle)}°",
                         { calc { it.copy(customIshaAngle = (it.customIshaAngle - 0.5).coerceAtLeast(10.0)) } },
                         { calc { it.copy(customIshaAngle = (it.customIshaAngle + 0.5).coerceAtMost(25.0)) } })
                 }
             }
             DropdownRow(
-                "Asr",
-                MadhabSetting.entries.map { it to it.displayName },
+                tr("Asr"),
+                MadhabSetting.entries.map { it to tr(it.displayName) },
                 calculation.madhab,
             ) { m -> calc { it.copy(madhab = m) } }
             DropdownRow(
-                "High latitude rule",
-                listOf<HighLatitudeSetting?>(null).map { it to "Automatic" } + HighLatitudeSetting.entries.map { it to it.displayName },
+                tr("High latitude rule"),
+                listOf<HighLatitudeSetting?>(null).map { it to tr("Automatic") } + HighLatitudeSetting.entries.map { it to tr(it.displayName) },
                 calculation.highLatitudeRule,
             ) { h -> calc { it.copy(highLatitudeRule = h) } }
         }
 
-        Panel(title = "ADJUSTMENTS (MINUTES)") {
+        Panel(title = tr("ADJUSTMENTS (MINUTES)")) {
             for (p in Prayer.entries) {
                 val off = calculation.offset(p)
-                SettingRow(p.displayName) {
+                SettingRow(tr(p.displayName)) {
                     Stepper(
                         if (off > 0) "+$off" else "$off",
                         { calc { it.withOffset((off - 1).coerceAtLeast(-30), p) } },
@@ -152,15 +167,15 @@ fun SettingsScreen(vm: SalahViewModel, modifier: Modifier) {
             }
         }
 
-        Panel(title = "ABOUT") {
-            SettingRow("Salah for Android", "Version ${appVersion(context)} · times by a Kotlin port of adhan-swift")
-            SettingRow("Original macOS app", "Prima Yudantra · github.com/primayudantra/salah", onClick = {
+        Panel(title = tr("ABOUT")) {
+            SettingRow(tr("Salah for Android"), tr("Version {0} · times by a Kotlin port of adhan-swift", appVersion(context)))
+            SettingRow(tr("Original macOS app"), "Prima Yudantra · github.com/primayudantra/salah", onClick = {
                 open(context, "https://github.com/primayudantra/salah")
             })
-            SettingRow("Source code", "github.com/zainkhalid91/salah-android", onClick = {
+            SettingRow(tr("Source code"), "github.com/zainkhalid91/salah-android", onClick = {
                 open(context, "https://github.com/zainkhalid91/salah-android")
             })
-            SettingRow("Pixel font", "Doto, SIL Open Font License 1.1")
+            SettingRow(tr("Pixel font"), "Doto, SIL Open Font License 1.1")
         }
     }
 }

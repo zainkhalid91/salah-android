@@ -1,7 +1,5 @@
 package salah.core
 
-import java.nio.file.Files
-import java.nio.file.Path
 import java.time.Instant
 import java.time.OffsetDateTime
 
@@ -22,6 +20,4 @@ object Fixtures {
 
     fun config(location: SavedLocation?, method: MethodID? = null) =
         SalahConfig(location = location, calculation = CalculationSettings(method = method), launchAtLogin = false)
-
-    fun tempPath(name: String = "config.json"): Path = Files.createTempDirectory("salah-tests-").resolve(name)
 }

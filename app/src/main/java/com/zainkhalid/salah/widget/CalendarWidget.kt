@@ -54,7 +54,8 @@ class CalendarWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
         val data = WidgetData.load(context, appWidgetId)
-        val locale = context.resources.configuration.locales[0] ?: Locale.getDefault()
+        val phone = context.resources.configuration.locales[0] ?: Locale.getDefault()
+        val locale = data.config.display.lang.locale(phone)
         provideContent { CalendarContent(data, locale) }
     }
 }

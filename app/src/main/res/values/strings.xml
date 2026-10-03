@@ -7,4 +7,5 @@
     <string name="widget_calendar_name">Islamic calendar</string>
     <string name="widget_calendar_description">This month in Hijri and Gregorian dates, with Islamic days marked</string>
     <string name="channel_reminders">Prayer reminders</string>
+    <string name="channel_azan">Azan at prayer time</string>
 </resources>

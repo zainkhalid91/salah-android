@@ -54,32 +54,32 @@ fun RemindersScreen(vm: SalahViewModel, modifier: Modifier) {
             .verticalScroll(rememberScrollState()).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        Text("Reminders", color = c.text, fontSize = 26.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 4.dp))
+        Text(tr("Reminders"), color = c.text, fontSize = 26.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 4.dp))
 
         if (!Notifications.canPost(context)) {
             Panel {
-                SettingRow("Notifications are off", "Allow notifications for Salah to get reminders.", onClick = { openAppSettings(context) })
+                SettingRow(tr("Notifications are off"), tr("Allow notifications for Salah to get reminders."), onClick = { openAppSettings(context) })
             }
         }
         if (!ReminderScheduler.canScheduleExact(context) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             Panel {
-                SettingRow("Reminders may arrive late", "Allow alarms and reminders so they fire on the minute.", onClick = {
+                SettingRow(tr("Reminders may arrive late"), tr("Allow alarms and reminders so they fire on the minute."), onClick = {
                     context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}")))
                 })
             }
         }
 
         Panel {
-            SwitchRow("Prayer reminders", r.enabled) { on -> vm.update { it.copy(reminders = it.reminders.copy(enabled = on)) } }
+            SwitchRow(tr("Prayer reminders"), r.enabled) { on -> vm.update { it.copy(reminders = it.reminders.copy(enabled = on)) } }
             val paused = r.isPaused(now)
             val until = r.pausedUntil
             val zone = config.location?.zone
             SettingRow(
-                if (paused) "Paused" else "Pause reminders",
-                if (paused && until != null && zone != null) "Until ${TimeFormatting.clock(until, zone, config.display.use24HourClock)}" else "Silence them for a while",
+                tr(if (paused) "Paused" else "Pause reminders"),
+                if (paused && until != null && zone != null) tr("Until {0}", TimeFormatting.clock(until, zone, config.display.use24HourClock, lang = config.display.lang)) else tr("Silence them for a while"),
             )
             Segmented(
-                options = listOf(0L to "Off", 1L to "1 hour", 3L to "3 hours", 24L to "Until tomorrow"),
+                options = listOf(0L to tr("Off"), 1L to tr("1 hour"), 3L to tr("3 hours"), 24L to tr("Until tomorrow")),
                 selected = if (paused) -1L else 0L,
                 onSelect = { hours ->
                     vm.update {
@@ -90,23 +90,29 @@ fun RemindersScreen(vm: SalahViewModel, modifier: Modifier) {
             )
         }
 
-        Panel(title = "PRAYERS") {
+        Panel(title = tr("PRAYERS")) {
             for (p in Prayer.prayers) PrayerRow(vm, config, p)
         }
 
-        Panel(title = "SOUND") {
+        Panel(title = tr("SOUND")) {
             Segmented(
-                options = ReminderSound.entries.map { it to it.displayName },
+                options = ReminderSound.entries.map { it to tr(it.displayName) },
                 selected = r.sound,
                 onSelect = { s -> vm.update { it.copy(reminders = it.reminders.copy(sound = s)) } },
                 modifier = Modifier.padding(vertical = 12.dp),
             )
+            SwitchRow(
+                tr("Azan at prayer time"),
+                r.azan && r.sound != ReminderSound.SILENT,
+                tr("For the five prayers. Early reminders keep the sound above."),
+                enabled = r.sound != ReminderSound.SILENT,
+            ) { on -> vm.update { it.copy(reminders = it.reminders.copy(azan = on)) } }
         }
 
-        Panel(title = "QUIET HOURS") {
-            SwitchRow("Quiet hours", r.quietHours.enabled, "No reminders in this window") { on -> vm.update { it.quiet { q -> q.copy(enabled = on) } } }
-            TimeRow("Starts", r.quietHours.start, r.quietHours.enabled) { v -> vm.update { it.quiet { q -> q.copy(start = v) } } }
-            TimeRow("Ends", r.quietHours.end, r.quietHours.enabled) { v -> vm.update { it.quiet { q -> q.copy(end = v) } } }
+        Panel(title = tr("QUIET HOURS")) {
+            SwitchRow(tr("Quiet hours"), r.quietHours.enabled, tr("No reminders in this window")) { on -> vm.update { it.quiet { q -> q.copy(enabled = on) } } }
+            TimeRow(tr("Starts"), r.quietHours.start, r.quietHours.enabled) { v -> vm.update { it.quiet { q -> q.copy(start = v) } } }
+            TimeRow(tr("Ends"), r.quietHours.end, r.quietHours.enabled) { v -> vm.update { it.quiet { q -> q.copy(end = v) } } }
         }
     }
 }
@@ -119,14 +125,14 @@ private fun PrayerRow(vm: SalahViewModel, config: SalahConfig, p: Prayer) {
     fun set(body: (PrayerReminder) -> PrayerReminder) = vm.update { it.copy(reminders = it.reminders.update(p, body)) }
     val enabled = config.reminders.enabled
     Column(Modifier.padding(bottom = 10.dp)) {
-        SwitchRow(p.displayName, reminder.enabled, enabled = enabled) { on -> set { it.copy(enabled = on) } }
+        SwitchRow(tr(p.displayName), reminder.enabled, enabled = enabled) { on -> set { it.copy(enabled = on) } }
         if (reminder.enabled) {
             Segmented(
-                options = PrayerReminder.ALLOWED_LEADS.map { it to if (it == 0) "No early" else "$it min" },
+                options = PrayerReminder.ALLOWED_LEADS.map { it to if (it == 0) tr("No early") else tr("{0} min", it) },
                 selected = reminder.leadMinutes,
                 onSelect = { m -> set { it.copy(leadMinutes = m) } },
             )
-            SwitchRow("At prayer time", reminder.atTime, enabled = enabled) { on -> set { it.copy(atTime = on) } }
+            SwitchRow(tr("At prayer time"), reminder.atTime, enabled = enabled) { on -> set { it.copy(atTime = on) } }
         }
     }
 }
@@ -145,9 +151,9 @@ private fun TimeRow(title: String, value: String, enabled: Boolean, onChange: (S
                 TextButton(onClick = {
                     onChange(String.format(Locale.ROOT, "%02d:%02d", state.hour, state.minute))
                     open = false
-                }) { Text("Set") }
+                }) { Text(tr("Set")) }
             },
-            dismissButton = { TextButton(onClick = { open = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { open = false }) { Text(tr("Cancel")) } },
             title = { Text(title) },
             text = { TimeInput(state = state) },
         )

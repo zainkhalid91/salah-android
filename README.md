@@ -11,23 +11,29 @@ This is the Android edition of [Salah](https://github.com/primayudantra/salah) b
 **Today**
 - The next prayer in large dot matrix type, with a live countdown. It switches to NOW when a prayer begins.
 - A coloured timeline of the day: Fajr, Sunrise, Dhuhr, Asr, Maghrib and Isha.
+- The sunnah times on the same timeline: Tahajjud (the last third of the night), Ishraq, Duha (Chasht), Zawal, Awwabin and Islamic midnight. They can be hidden in Settings.
 - Tap a prayer to see its reminder, method and offset. Tap the date to look at any other day.
-- Hijri date, with Jumu'ah shown on Fridays.
+- Hijri date, with Jumuah shown on Fridays.
 
 **Islamic calendar**
 - A month view in Hijri or Gregorian, with both dates in every day. Swipe between months.
 - Islamic days are marked: Islamic New Year, Ashura, Mawlid, Isra and Mi'raj, Shab-e-Barat, Ramadan, the last ten nights, Laylat al-Qadr, both Eids, the first ten days of Dhu al-Hijjah, Arafah, Tashreeq, and the white days.
 - A converter that works both ways: Hijri to Gregorian and Gregorian to Hijri.
 - Every Islamic date of the year with its Gregorian date and a countdown.
-- Follows the phone's language: English, Arabic, Urdu, Indonesian, Malay, Turkish or French, with local digits and a right-to-left layout for Arabic and Urdu.
+- The selected day shows the Hijri month's number too, e.g. 22 Rabi' al-Thani (4) 1448 AH.
 - Alerts for each new Islamic month and for special days, at Maghrib the evening before (when the Islamic day begins) or on the morning of the day.
 
 **Schedule**
 - The week or the month at a glance, with today highlighted.
 - Share the schedule as text.
 
+**Language**
+- English or Arabic (العربية), picked the first time the app opens and changeable in Settings.
+- Arabic switches the whole app to a right-to-left layout, including the calendar, widgets and notifications.
+
 **Reminders**
 - Per prayer: an early reminder (5, 10, 15 or 30 minutes before) and one at the prayer time.
+- The azan plays when each of the five prayers begins. Early reminders and Islamic date alerts keep the normal sound.
 - Quiet hours, and pause for 1 hour, 3 hours or until tomorrow.
 - Sounds: system default, the Salah soft chime, or silent.
 - Exact alarms, re-planned after a reboot or a time zone change.
@@ -73,9 +79,11 @@ Or open the folder in Android Studio and press Run.
 
 ```
 core/   Pure Kotlin, shared with the Windows edition: the adhan-swift port,
-        config, schedules, Hijri dates, the reminder planner, city search.
+        config, schedules, sunnah times, Hijri dates, English and Arabic text,
+        the reminder planner, city search. The Windows core also has the
+        config file store and the command line keys, which Android doesn't need.
 app/    The Android app
-  ui/         Compose screens: Today, Schedule, Reminders, Settings
+  ui/         Compose screens: Today, Calendar, Schedule, Reminders, Settings
   widget/     Glance widgets, per widget styles, the configure screen
   reminders/  Exact alarms, notifications, boot and time change handling
   location/   One-off location through the platform LocationManager
@@ -90,6 +98,7 @@ The config is the same JSON file format as the macOS and Windows apps.
 - **Windows and Android editions:** [Zain Khalid](https://github.com/zainkhalid91)
 - **Prayer calculation:** ported from [adhan-swift](https://github.com/batoulapps/adhan-swift) by Batoul Apps (MIT License). The notice is in `core/src/main/kotlin/salah/core/adhan/Adhan.kt`.
 - **Pixel font:** [Doto](https://github.com/oliverlalan/Doto), SIL Open Font License 1.1 (`docs/OFL-Doto.txt`)
+- **Azan clip:** from islamcan.com, as supplied by the project owner (`app/src/main/res/raw/salah_azan.mp3`)
 - **Location search:** [Open-Meteo](https://open-meteo.com/) geocoding and [BigDataCloud](https://www.bigdatacloud.com/) reverse geocoding
 
 ## License

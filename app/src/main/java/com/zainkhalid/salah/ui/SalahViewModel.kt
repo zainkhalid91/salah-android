@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import salah.core.ExtraTime
 import salah.core.LocationSearch
 import salah.core.Prayer
 import salah.core.SalahConfig
@@ -30,6 +31,7 @@ class SalahViewModel(app: Application) : AndroidViewModel(app) {
     var tab by mutableStateOf(Tab.TODAY)
     var previewDate by mutableStateOf<LocalDate?>(null)
     var detailPrayer by mutableStateOf<Prayer?>(null)
+    var detailExtra by mutableStateOf<ExtraTime?>(null)
     var showLocationSheet by mutableStateOf(false)
 
     var locating by mutableStateOf(false)
@@ -42,6 +44,13 @@ class SalahViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var searchMessage by mutableStateOf<String?>(null)
         private set
+
+    /** Back to the live display. */
+    fun clearDetail() {
+        detailPrayer = null
+        detailExtra = null
+        previewDate = null
+    }
 
     fun update(body: (SalahConfig) -> SalahConfig) = repo.update(body)
 

@@ -51,11 +51,17 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
+import salah.core.AppLanguage
+import salah.core.AppText
+import salah.core.CalendarText
 import salah.core.DaySchedule
+import salah.core.ExtraTime
+import salah.core.ExtraWindow
 import salah.core.HijriDate
 import salah.core.MadhabSetting
 import salah.core.Prayer
@@ -63,12 +69,15 @@ import salah.core.PrayerClock
 import salah.core.PrayerClockState
 import salah.core.PrayerSchedule
 import salah.core.SalahConfig
+import salah.core.SunnahTimes
 import salah.core.TimeFormatting
+import salah.core.TimelineItem
 import salah.core.localDate
 import salah.core.monthName
 import salah.core.weekdayName
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.Locale
 
@@ -125,39 +134,42 @@ private fun DisplayPanel(vm: SalahViewModel, config: SalahConfig, state: PrayerC
         Column(Modifier.fillMaxWidth().padding(24.dp)) {
             val preview = vm.previewDate
             val detail = vm.detailPrayer
+            val extra = vm.detailExtra
             val d = config.display
+            val lang = d.lang
             when {
                 config.location == null -> SetLocation(vm, nameSize, width)
                 state == null -> {
-                    Eyebrow("LOCATION")
-                    Text("The saved location is invalid.", color = c.text, modifier = Modifier.padding(top = 16.dp))
-                    OutlinedButton(onClick = { vm.showLocationSheet = true }, modifier = Modifier.padding(top = 10.dp)) { Text("Change location") }
+                    Eyebrow(tr("LOCATION"))
+                    Text(tr("The saved location is invalid."), color = c.text, modifier = Modifier.padding(top = 16.dp))
+                    OutlinedButton(onClick = { vm.showLocationSheet = true }, modifier = Modifier.padding(top = 10.dp)) { Text(tr("Change location")) }
                 }
                 preview != null && preview != state.today.date -> Preview(vm, config, preview, nameSize, timeSize, width)
                 detail != null -> Detail(vm, config, detail, state.today, nameSize, timeSize, width)
+                extra != null -> ExtraDetail(config, extra, state.today.date, nameSize, timeSize, width)
                 state.nowPrayer != null && state.today.time(state.nowPrayer!!) != null -> {
                     val p = state.nowPrayer!!
-                    Status("NOW")
-                    PrayerName(state.today.label(p, d.jumuahRelabel), nameSize, c.accent, width)
+                    Status(tr("NOW"))
+                    PrayerName(state.today.label(p, d.jumuahRelabel, lang), nameSize, c.accent, width)
                     PrayerTime(config, state.today.time(p)!!, timeSize)
                     Rule()
-                    Countdown("STARTED", state.secondsSinceNow ?: 0.0)
+                    Countdown(tr("STARTED"), state.secondsSinceNow ?: 0.0)
                 }
                 state.next != null -> {
                     val n = state.next!!
-                    Status("NEXT PRAYER", if (n.isTomorrow) "TOMORROW" else null)
-                    PrayerName(n.label(d.jumuahRelabel), nameSize, c.text, width)
+                    Status(tr("NEXT PRAYER"), if (n.isTomorrow) tr("TOMORROW") else null)
+                    PrayerName(n.label(d.jumuahRelabel, lang), nameSize, c.text, width)
                     PrayerTime(config, n.time, timeSize)
                     Rule()
-                    Countdown("IN", n.secondsRemaining(now))
-                    state.today.undefinedExplanation?.let {
+                    Countdown(tr("IN"), n.secondsRemaining(now))
+                    state.today.undefinedExplanation(lang)?.let {
                         Text(it.first, color = c.secondary, fontSize = 12.5.sp, modifier = Modifier.padding(top = 12.dp))
                     }
                 }
                 else -> {
-                    Status("NEXT PRAYER")
+                    Status(tr("NEXT PRAYER"))
                     Text("--", style = pixelStyle(nameSize), color = c.text)
-                    state.today.undefinedExplanation?.let {
+                    state.today.undefinedExplanation(lang)?.let {
                         Text(it.first, color = c.secondary, fontSize = 12.5.sp, modifier = Modifier.padding(top = 12.dp))
                     }
                 }
@@ -210,7 +222,7 @@ private fun fittedSize(text: String, size: Float, width: Dp): Float {
 @Composable
 private fun PrayerTime(config: SalahConfig, t: Instant, size: Float) {
     val zone = config.location?.zone ?: return
-    val (time, period) = TimeFormatting.parts(t, zone, config.display.use24HourClock, padHour = true)
+    val (time, period) = TimeFormatting.parts(t, zone, config.display.use24HourClock, padHour = true, lang = config.display.lang)
     Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         PixelText(time, size)
         if (period.isNotEmpty()) Text(period, color = palette.secondary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 10.dp))
@@ -241,19 +253,16 @@ private fun Footer(vm: SalahViewModel, config: SalahConfig, now: Instant) {
         }
         Column(horizontalAlignment = Alignment.End) {
             val use24 = config.display.use24HourClock
-            val (t, period) = TimeFormatting.parts(now, loc.zone, use24)
+            val (t, period) = TimeFormatting.parts(now, loc.zone, use24, lang = config.display.lang)
             val secs = now.atZone(loc.zone).second
             PixelText(if (use24) t + String.format(Locale.ROOT, ":%02d", secs) else "$t $period", 16f)
-            if (vm.detailPrayer != null || vm.previewDate != null) {
+            if (vm.detailPrayer != null || vm.detailExtra != null || vm.previewDate != null) {
                 Text(
-                    "Back to now",
+                    tr("Back to now"),
                     color = c.accent,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(top = 6.dp).clickable {
-                        vm.detailPrayer = null
-                        vm.previewDate = null
-                    },
+                    modifier = Modifier.padding(top = 6.dp).clickable { vm.clearDetail() },
                 )
             }
         }
@@ -262,11 +271,18 @@ private fun Footer(vm: SalahViewModel, config: SalahConfig, now: Instant) {
 
 @Composable
 private fun Preview(vm: SalahViewModel, config: SalahConfig, d: LocalDate, nameSize: Float, timeSize: Float, width: Dp) {
-    Status("PREVIEW")
-    PrayerName(d.weekdayName.take(3), nameSize, palette.text, width)
-    PixelText(String.format(Locale.ROOT, "%02d %s", d.dayOfMonth, d.monthName.take(3).uppercase()), timeSize * 0.62f, Modifier.padding(top = 4.dp))
+    val lang = config.display.lang
+    val locale = appLocale()
+    Status(tr("PREVIEW"))
+    if (lang == AppLanguage.EN) {
+        PrayerName(d.weekdayName.take(3), nameSize, palette.text, width)
+        PixelText(String.format(Locale.ROOT, "%02d %s", d.dayOfMonth, d.monthName.take(3).uppercase()), timeSize * 0.62f, Modifier.padding(top = 4.dp))
+    } else {
+        PrayerName(CalendarText.weekdayLong(d.dayOfWeek, locale), nameSize, palette.text, width)
+        Text("${d.dayOfMonth} ${CalendarText.gregorianMonth(d.monthValue, locale)}", color = palette.text, fontSize = 34.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
+    }
     Rule()
-    Text("${d.year} · ${HijriDate.of(d, config.display.hijriAdjustment).formatted}", color = palette.secondary)
+    Text("${d.year} · ${AppText.hijri(HijriDate.of(d, config.display.hijriAdjustment), lang)}", color = palette.secondary)
 }
 
 @Composable
@@ -274,42 +290,87 @@ private fun Detail(vm: SalahViewModel, config: SalahConfig, p: Prayer, schedule:
     val c = palette
     val reminder = config.reminders.reminder(p)
     val offset = config.calculation.offset(p)
-    Status(if (p == Prayer.SUNRISE) "SUNRISE" else "PRAYER DETAIL")
-    PrayerName(schedule.label(p, config.display.jumuahRelabel), nameSize, c.text, width)
+    Status(tr(if (p == Prayer.SUNRISE) "SUNRISE" else "PRAYER DETAIL"))
+    PrayerName(schedule.label(p, config.display.jumuahRelabel, config.display.lang), nameSize, c.text, width)
     schedule.time(p)?.let { PrayerTime(config, it, timeSize) }
     Rule()
-    val reminderText = when {
-        p == Prayer.SUNRISE -> "End of Fajr time, not a prayer"
-        !config.reminders.enabled -> "Off (all reminders)"
-        !reminder.enabled || reminder.leads.isEmpty() -> "Off"
-        else -> buildList {
-            if (reminder.leadMinutes > 0) add("${reminder.leadMinutes} min before")
-            if (reminder.atTime) add("at prayer time")
-        }.joinToString(" and ").replaceFirstChar { it.uppercase() }
+    val parts = buildList {
+        if (reminder.leadMinutes > 0) add(tr("{0} min before", reminder.leadMinutes))
+        if (reminder.atTime) add(tr("at prayer time"))
     }
-    val rows = listOf(
-        (if (p == Prayer.SUNRISE) "Note" else "Reminder") to reminderText,
-        "Method" to config.methodName,
-        "Offset" to if (offset == 0) "None" else "${if (offset > 0) "+" else ""}$offset min",
+    val reminderText = when {
+        p == Prayer.SUNRISE -> tr("End of Fajr time, not a prayer")
+        !config.reminders.enabled -> tr("Off (all reminders)")
+        !reminder.enabled || reminder.leads.isEmpty() -> tr("Off")
+        parts.size == 2 -> tr("{0} and {1}", parts[0], parts[1]).replaceFirstChar { it.uppercase() }
+        else -> parts[0].replaceFirstChar { it.uppercase() }
+    }
+    DetailRows(
+        listOf(
+            tr(if (p == Prayer.SUNRISE) "Note" else "Reminder") to reminderText,
+            tr("Method") to tr(config.methodName),
+            tr("Offset") to if (offset == 0) tr("None") else tr("{0} min", "${if (offset > 0) "+" else ""}$offset"),
+        ),
     )
+}
+
+@Composable
+private fun DetailRows(rows: List<Pair<String, String>>) {
     for ((k, v) in rows) {
         Row(Modifier.padding(vertical = 3.dp)) {
-            Text(k, color = c.secondary, fontSize = 13.sp, modifier = Modifier.width(80.dp))
-            Text(v, color = c.text, fontSize = 13.sp)
+            Text(k, color = palette.secondary, fontSize = 13.sp, modifier = Modifier.width(80.dp))
+            Text(v, color = palette.text, fontSize = 13.sp)
         }
     }
 }
 
+/** What an extra time is, and its window today. */
+@Composable
+private fun ExtraDetail(config: SalahConfig, extra: ExtraTime, date: LocalDate, nameSize: Float, timeSize: Float, width: Dp) {
+    val location = config.location ?: return
+    val lang = config.display.lang
+    val window = remember(date, location, config.calculation) {
+        SunnahTimes.forDate(date, location, config.calculation).firstOrNull { it.time == extra }
+    }
+    Status(tr(if (extra.isPrayer) "SUNNAH PRAYER" else "PRAYER DETAIL"))
+    PrayerName(AppText.extra(extra, lang), nameSize, palette.text, width)
+    window?.let { PrayerTime(config, it.start, timeSize) }
+    Rule()
+    Text(tr(EXTRA_NOTES.getValue(extra)), color = palette.text, fontSize = 13.sp, modifier = Modifier.padding(bottom = 6.dp))
+    if (window != null && window.end != window.start) {
+        val use24 = config.display.use24HourClock
+        DetailRows(
+            listOf(
+                tr("Window") to tr(
+                    "{0} to {1}",
+                    TimeFormatting.clock(window.start, location.zone, use24, lang = lang),
+                    TimeFormatting.clock(window.end, location.zone, use24, lang = lang),
+                ),
+            ),
+        )
+    }
+}
+
+private val EXTRA_NOTES = mapOf(
+    ExtraTime.TAHAJJUD to "The last third of the night, the best time for night prayer.",
+    ExtraTime.ISHRAQ to "Once the sun has fully risen, about 20 minutes after sunrise.",
+    ExtraTime.DUHA to "The forenoon prayer, once a quarter of the day has passed.",
+    ExtraTime.ZAWAL to "The sun is at its height. Wait for Dhuhr before praying.",
+    ExtraTime.AWWABIN to "Between Maghrib and Isha, after the sunnah of Maghrib.",
+    ExtraTime.MIDNIGHT to "Halfway between Maghrib and Fajr. Pray Isha before it.",
+)
+
 @Composable
 private fun SetLocation(vm: SalahViewModel, nameSize: Float, width: Dp) {
     val c = palette
-    Eyebrow("WELCOME")
-    PixelText("SET LOCATION", fittedSize("SET LOCATION", nameSize * 0.8f, width), Modifier.padding(top = 18.dp))
-    Text("Prayer times are calculated for where you are.", color = c.secondary, modifier = Modifier.padding(top = 12.dp))
+    val title = tr("SET LOCATION")
+    Eyebrow(tr("WELCOME"))
+    PixelText(title, fittedSize(title, nameSize * 0.8f, width), Modifier.padding(top = 18.dp))
+    Text(tr("Prayer times are calculated for where you are."), color = c.secondary, modifier = Modifier.padding(top = 12.dp))
     Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         Button(onClick = { vm.showLocationSheet = true }) {
             if (vm.locating) CircularProgressIndicator(Modifier.size(14.dp), color = c.onAccent, strokeWidth = 2.dp)
-            else Text("Set location")
+            else Text(tr("Set location"))
         }
     }
 }
@@ -326,6 +387,11 @@ private fun Timeline(vm: SalahViewModel, config: SalahConfig, state: PrayerClock
     val isPreview = date != today
     val schedule = if (isPreview) PrayerSchedule.forDate(date, location, config.calculation) else state?.today
     val hijri = HijriDate.of(date, config.display.hijriAdjustment)
+    val lang = config.display.lang
+    val extras = if (config.display.showSunnahTimes) {
+        remember(date, location, config.calculation) { SunnahTimes.forDate(date, location, config.calculation) }
+    } else emptyList()
+    val items = TimelineItem.of(schedule, extras)
     var picking by remember { mutableStateOf(false) }
 
     Column(
@@ -336,14 +402,19 @@ private fun Timeline(vm: SalahViewModel, config: SalahConfig, state: PrayerClock
             .padding(horizontal = 22.dp, vertical = 20.dp),
     ) {
         Column(Modifier.clip(RoundedCornerShape(8.dp)).clickable { picking = true }) {
-            Text(TimeFormatting.longDate(date, includeYear = false).uppercase(), color = c.onTimeline, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-            Text(hijri.formatted.uppercase(), color = c.onTimelineDim, fontSize = 12.5.sp)
+            Text(AppText.longDate(date, lang).uppercase(), color = c.onTimeline, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(AppText.hijri(hijri, lang).uppercase(), color = c.onTimelineDim, fontSize = 12.5.sp)
         }
         Spacer(Modifier.height(16.dp))
-        Prayer.entries.forEachIndexed { i, p ->
-            TimelineRow(vm, config, p, schedule, if (isPreview) null else state, now, i == 0, i == Prayer.entries.lastIndex)
+        items.forEachIndexed { i, item ->
+            val first = i == 0
+            val last = i == items.lastIndex
+            when (item) {
+                is TimelineItem.Fard -> TimelineRow(vm, config, item.prayer, schedule, if (isPreview) null else state, now, first, last)
+                is TimelineItem.Extra -> ExtraRow(vm, config, item.window, location.zone, now, isPreview, first, last)
+            }
         }
-        val method = config.methodName + if (config.calculation.madhab == MadhabSetting.HANAFI) " · Hanafi Asr" else ""
+        val method = tr(config.methodName) + if (config.calculation.madhab == MadhabSetting.HANAFI) " · " + tr("Hanafi Asr") else ""
         Text(method, color = c.onTimelineDim, fontSize = 11.5.sp, modifier = Modifier.padding(top = 14.dp))
     }
 
@@ -358,15 +429,16 @@ private fun Timeline(vm: SalahViewModel, config: SalahConfig, state: PrayerClock
                         val picked = LocalDate.ofEpochDay(Math.floorDiv(ms, 86_400_000L))
                         vm.previewDate = if (picked == today) null else picked
                         vm.detailPrayer = null
+                        vm.detailExtra = null
                     }
                     picking = false
-                }) { Text("Show") }
+                }) { Text(tr("Show")) }
             },
             dismissButton = {
                 TextButton(onClick = {
                     vm.previewDate = null
                     picking = false
-                }) { Text("Today") }
+                }) { Text(tr("Today")) }
             },
         ) { DatePicker(state = pickerState) }
     }
@@ -383,26 +455,19 @@ private fun TimelineRow(
     val isCurrent = state?.let { it.nowPrayer == prayer || (it.nowPrayer == null && it.current == prayer) } ?: false
     val isPast = state != null && (time?.let { it <= now } ?: false) && !isCurrent
     val isSunrise = prayer == Prayer.SUNRISE
-    val label = schedule?.label(prayer, config.display.jumuahRelabel) ?: prayer.displayName
+    val label = schedule?.label(prayer, config.display.jumuahRelabel, config.display.lang) ?: tr(prayer.displayName)
     val fg = if (isNext) c.text else if (isSunrise) c.onTimelineDim else c.onTimeline
     val lineColor = c.onTimelineDim.copy(alpha = 0.55f)
 
-    Box(
-        Modifier.fillMaxWidth().drawBehind {
-            // Line through the dots, joining the rows.
-            val x = 16.dp.toPx()
-            if (!isFirst) drawLine(lineColor, Offset(x, 0f), Offset(x, size.height / 2), 1.dp.toPx())
-            if (!isLast) drawLine(lineColor, Offset(x, size.height / 2), Offset(x, size.height), 1.dp.toPx())
-        },
-    ) {
+    Box(Modifier.fillMaxWidth().timelineLine(lineColor, isFirst, isLast)) {
         Row(
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
                 .background(if (isNext) c.highlight else Color.Transparent)
                 .clickable(enabled = schedule != null) {
+                    vm.clearDetail()
                     vm.detailPrayer = prayer
-                    vm.previewDate = null
                 }
                 .padding(horizontal = 10.dp, vertical = 11.dp)
                 .alpha(if (isPast && !isNext) 0.55f else 1f),
@@ -422,18 +487,67 @@ private fun TimelineRow(
             Text(label, color = fg, fontSize = if (isSunrise) 13.sp else 15.sp, fontWeight = FontWeight.Medium)
             if (isCurrent && !isNext) {
                 Box(Modifier.padding(start = 8.dp).clip(RoundedCornerShape(4.dp)).background(Color.White.copy(alpha = 0.18f)).padding(horizontal = 6.dp, vertical = 1.dp)) {
-                    Text("now", color = fg, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                    Text(tr("now"), color = fg, fontSize = 11.sp, fontWeight = FontWeight.Medium)
                 }
             }
             Spacer(Modifier.weight(1f))
             val zone = schedule?.zone
             if (time != null && zone != null) {
-                val (t, period) = TimeFormatting.parts(time, zone, config.display.use24HourClock, padHour = true)
+                val (t, period) = TimeFormatting.parts(time, zone, config.display.use24HourClock, padHour = true, lang = config.display.lang)
                 PixelText(t, if (isSunrise) 15f else 19f, color = fg)
                 if (period.isNotEmpty()) Text(" $period", color = fg.copy(alpha = 0.7f), fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
             } else {
                 PixelText("--:--", 19f, color = fg)
             }
+        }
+    }
+}
+
+/** Line through the dots, joining the rows. Drawn on the start side, so it follows RTL. */
+private fun Modifier.timelineLine(color: Color, isFirst: Boolean, isLast: Boolean) = drawBehind {
+    val x = if (layoutDirection == LayoutDirection.Rtl) size.width - 16.dp.toPx() else 16.dp.toPx()
+    if (!isFirst) drawLine(color, Offset(x, 0f), Offset(x, size.height / 2), 1.dp.toPx())
+    if (!isLast) drawLine(color, Offset(x, size.height / 2), Offset(x, size.height), 1.dp.toPx())
+}
+
+/** A sunnah prayer or marker: smaller and dimmer than the five, with when its window closes. */
+@Composable
+private fun ExtraRow(
+    vm: SalahViewModel, config: SalahConfig, window: ExtraWindow, zone: ZoneId, now: Instant, isPreview: Boolean,
+    isFirst: Boolean, isLast: Boolean,
+) {
+    val c = palette
+    val lang = config.display.lang
+    val use24 = config.display.use24HourClock
+    val active = !isPreview && now >= window.start && now < window.end
+    val past = !isPreview && now >= window.end && !active
+    val fg = if (active) c.onTimeline else c.onTimelineDim
+    Box(Modifier.fillMaxWidth().timelineLine(c.onTimelineDim.copy(alpha = 0.55f), isFirst, isLast)) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .clickable {
+                    vm.clearDetail()
+                    vm.detailExtra = window.time
+                }
+                .padding(horizontal = 10.dp, vertical = 7.dp)
+                .alpha(if (past) 0.55f else 1f),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(Modifier.width(22.dp), contentAlignment = Alignment.CenterStart) {
+                Box(Modifier.padding(start = 2.dp).size(7.dp).background(if (active) c.onTimeline else c.timeline, CircleShape).border(1.dp, c.onTimelineDim, CircleShape))
+            }
+            Column {
+                Text(AppText.extra(window.time, lang), color = fg, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                if (window.end != window.start) {
+                    Text(tr("until {0}", TimeFormatting.clock(window.end, zone, use24, lang = lang)), color = c.onTimelineDim, fontSize = 10.5.sp)
+                }
+            }
+            Spacer(Modifier.weight(1f))
+            val (t, period) = TimeFormatting.parts(window.start, zone, use24, padHour = true, lang = lang)
+            PixelText(t, 15f, color = fg)
+            if (period.isNotEmpty()) Text(" $period", color = fg.copy(alpha = 0.7f), fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }

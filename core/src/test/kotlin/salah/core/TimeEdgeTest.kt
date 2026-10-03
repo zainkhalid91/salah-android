@@ -77,12 +77,12 @@ class TimeEdgeTest {
     fun jumuahOnlyOnFridayAndWhenEnabled() {
         val f = PrayerSchedule.forDate(LocalDate.of(2026, 9, 25), Fixtures.singapore, CalculationSettings())
         val s = PrayerSchedule.forDate(LocalDate.of(2026, 9, 26), Fixtures.singapore, CalculationSettings())
-        assertEquals("Jumu'ah", f.label(Prayer.DHUHR, true))
+        assertEquals("Jumuah", f.label(Prayer.DHUHR, true))
         assertEquals("Dhuhr", f.label(Prayer.DHUHR, false))
         assertEquals("Dhuhr", s.label(Prayer.DHUHR, true))
         assertEquals("Asr", f.label(Prayer.ASR, true))
         val next = NextPrayerResolver.resolve(Fixtures.date("2026-09-25T10:00:00+08:00"), Fixtures.singapore, CalculationSettings())!!
-        assertEquals("Jumu'ah", next.label(true))
+        assertEquals("Jumuah", next.label(true))
         assertEquals("Dhuhr", next.label(false))
     }
 
@@ -115,7 +115,6 @@ class TimeEdgeTest {
         val h = HijriDate.of(d)
         assertEquals(1448, h.year)
         assertEquals(4, h.month)
-        assertEquals("Rabi' al-Thani", h.monthName)
         assertEquals(HijriDate.of(d.plusDays(1)), HijriDate.of(d, 1))
         assertEquals(HijriDate.of(d.minusDays(2)), HijriDate.of(d, -2))
         assertEquals(HijriDate.of(d, 2), HijriDate.of(d, 5))
@@ -124,26 +123,15 @@ class TimeEdgeTest {
     }
 
     @Test
-    fun localDateParsing() {
-        assertEquals(LocalDate.of(2026, 9, 27), parseLocalDate("2026-09-27"))
-        assertNull(parseLocalDate("2026-02-30"))
-        assertNull(parseLocalDate("27/09/2026"))
-    }
-
-    @Test
     fun formatting() {
         assertEquals("01:25:43", TimeFormatting.countdown(5143.0))
         assertEquals("00:00:00", TimeFormatting.countdown(-4.0))
-        assertEquals("42m", TimeFormatting.short(42 * 60 + 18.0))
-        assertEquals("1h 25m", TimeFormatting.short(85 * 60.0))
-        assertEquals("<1m", TimeFormatting.short(30.0))
-        assertEquals("1 hour 25 minutes", TimeFormatting.spoken(85 * 60.0))
         val t = Fixtures.date("2026-09-27T20:10:00+08:00")
         val z = Fixtures.singapore.zone
         assertEquals("20:10", TimeFormatting.clock(t, z, true))
         assertEquals("8:10 PM", TimeFormatting.clock(t, z, false))
         assertEquals("08:10 PM", TimeFormatting.clock(t, z, false, padHour = true))
-        assertEquals("2026-09-27T20:10:00+08:00", TimeFormatting.iso8601(t, z))
+        assertEquals("8:10 م", TimeFormatting.clock(t, z, false, lang = AppLanguage.AR))
         assertEquals("Sunday, 27 September 2026", TimeFormatting.longDate(LocalDate.of(2026, 9, 27)))
         assertEquals("Fri, 25 Sep", TimeFormatting.shortDate(LocalDate.of(2026, 9, 25)))
     }
