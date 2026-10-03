@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import salah.core.AppLanguage
@@ -34,6 +35,11 @@ val LocalLang = staticCompositionLocalOf { AppLanguage.EN }
 @Composable
 @ReadOnlyComposable
 fun tr(en: String, vararg args: Any): String = AppText.t(LocalLang.current, en, *args)
+
+/** Letter spacing for small caps labels. None in Arabic, whose letters join. */
+@Composable
+@ReadOnlyComposable
+fun tracking(value: Float): TextUnit = if (LocalLang.current.rtl) 0.sp else value.sp
 
 /** The app language with the phone's region, for dates and the first day of the week. */
 @Composable

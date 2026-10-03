@@ -43,7 +43,7 @@ import com.zainkhalid.salah.data.AccentColor
 /** Small spaced-out label, e.g. "NEXT PRAYER". */
 @Composable
 fun Eyebrow(text: String, modifier: Modifier = Modifier, color: Color = palette.secondary) {
-    Text(text, modifier = modifier, color = color, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.5.sp)
+    Text(text, modifier = modifier, color = color, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = tracking(1.5f))
 }
 
 @Composable

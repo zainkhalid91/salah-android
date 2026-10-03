@@ -186,7 +186,7 @@ private fun DisplayPanel(vm: SalahViewModel, config: SalahConfig, state: PrayerC
 private fun Status(text: String, tag: String? = null) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Eyebrow(text, Modifier.weight(1f))
-        if (tag != null) Text(tag, color = palette.accent, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.6.sp)
+        if (tag != null) Text(tag, color = palette.accent, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = tracking(0.6f))
     }
 }
 
@@ -237,7 +237,7 @@ private fun Rule() {
 @Composable
 private fun Countdown(label: String, seconds: Double) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(label, color = palette.secondary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.5.sp)
+        Text(label, color = palette.secondary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = tracking(1.5f))
         PixelText(TimeFormatting.countdown(seconds), 26f)
     }
 }

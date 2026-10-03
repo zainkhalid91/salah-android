@@ -67,7 +67,6 @@ import salah.core.CalendarDay
 import salah.core.CalendarText
 import salah.core.IslamicAlertTime
 import salah.core.IslamicCalendar
-import salah.core.IslamicEvent
 import salah.core.MonthGrid
 import salah.core.PrimaryCalendar
 import salah.core.SalahConfig
@@ -364,7 +363,7 @@ private fun SelectedDay(date: LocalDate, adj: Int, today: LocalDate, lang: CalLa
                 color = c.onTimelineDim,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
-                letterSpacing = 1.2.sp,
+                letterSpacing = tracking(1.2f),
                 modifier = Modifier.weight(1f),
             )
             if (rel != 0L) Text(CalendarText.relative(rel, lang), color = c.onTimelineDim, fontSize = 12.sp)
