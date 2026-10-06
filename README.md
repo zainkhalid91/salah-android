@@ -20,8 +20,14 @@ This is the Android edition of [Salah](https://github.com/primayudantra/salah) b
 - Islamic days are marked: Islamic New Year, Ashura, Mawlid, Isra and Mi'raj, Shab-e-Barat, Ramadan, the last ten nights, Laylat al-Qadr, both Eids, the first ten days of Dhu al-Hijjah, Arafah, Tashreeq, and the white days.
 - A converter that works both ways: Hijri to Gregorian and Gregorian to Hijri.
 - Every Islamic date of the year with its Gregorian date and a countdown.
-- The selected day shows the Hijri month's number too, e.g. 22 Rabi' al-Thani (4) 1448 AH.
+- The selected day and the converter show the Hijri month's number too, e.g. 7 Sha'ban (8) 1448 AH.
 - Alerts for each new Islamic month and for special days, at Maghrib the evening before (when the Islamic day begins) or on the morning of the day.
+
+**Qibla**
+- A compass that points to the Kaaba from wherever you are, with the bearing from true north and the distance to Makkah.
+- The dial turns with your phone. The ring lights up and the phone gives a short buzz when you face the Qibla.
+- Corrects for magnetic declination, and tells you when the compass needs calibrating.
+- Uses the phone's motion sensors. No extra permission, and it uses the location you already set.
 
 **Schedule**
 - The week or the month at a glance, with today highlighted.
@@ -83,7 +89,7 @@ core/   Pure Kotlin, shared with the Windows edition: the adhan-swift port,
         the reminder planner, city search. The Windows core also has the
         config file store and the command line keys, which Android doesn't need.
 app/    The Android app
-  ui/         Compose screens: Today, Calendar, Schedule, Reminders, Settings
+  ui/         Compose screens: Today, Calendar, Qibla, Schedule, Reminders, Settings
   widget/     Glance widgets, per widget styles, the configure screen
   reminders/  Exact alarms, notifications, boot and time change handling
   location/   One-off location through the platform LocationManager

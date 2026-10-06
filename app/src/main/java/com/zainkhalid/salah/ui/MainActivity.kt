@@ -92,6 +92,7 @@ private fun SalahRoot(vm: SalahViewModel) {
                                 when (tab) {
                                     Tab.TODAY -> Icons.Filled.Home
                                     Tab.CALENDAR -> Icons.Filled.DateRange
+                                    Tab.QIBLA -> QiblaIcon
                                     Tab.SCHEDULE -> Icons.Filled.List
                                     Tab.REMINDERS -> Icons.Filled.Notifications
                                     Tab.SETTINGS -> Icons.Filled.Settings
@@ -118,6 +119,7 @@ private fun SalahRoot(vm: SalahViewModel) {
         when (vm.tab) {
             Tab.TODAY -> TodayScreen(vm, modifier)
             Tab.CALENDAR -> CalendarScreen(vm, modifier)
+            Tab.QIBLA -> QiblaScreen(vm, modifier)
             Tab.SCHEDULE -> ScheduleScreen(vm, modifier)
             Tab.REMINDERS -> RemindersScreen(vm, modifier)
             Tab.SETTINGS -> SettingsScreen(vm, modifier)

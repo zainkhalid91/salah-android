@@ -415,7 +415,7 @@ private fun Converter(adj: Int, lang: CalLang, locale: Locale, onShow: (LocalDat
             }
             result = g
             val h = IslamicCalendar.toHijri(g, adj)
-            ResultLine(h?.let { CalendarText.hijri(it, lang) } ?: CalendarText.text(CalKey.OUT_OF_RANGE, lang), lang)
+            ResultLine(h?.let { CalendarText.hijri(it, lang, monthNumber = true) } ?: CalendarText.text(CalKey.OUT_OF_RANGE, lang), lang)
         } else {
             val maxDay = IslamicCalendar.monthLength(hYear, hMonth) ?: 30
             if (hDay > maxDay) hDay = maxDay
