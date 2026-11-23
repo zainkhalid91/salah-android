@@ -3,6 +3,7 @@ package com.zainkhalid.salah.ui
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,6 +39,7 @@ import salah.core.AppLanguage
 import salah.core.AppText
 import salah.core.DaySchedule
 import salah.core.Prayer
+import salah.core.SunnahFast
 import salah.core.PrayerSchedule
 import salah.core.ScheduleExporter
 import salah.core.TimeFormatting
@@ -74,7 +76,7 @@ fun ScheduleScreen(vm: SalahViewModel, modifier: Modifier) {
         val shareTitle = tr("Share schedule")
 
         Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(tr("Schedule"), color = c.text, fontSize = 26.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Box(Modifier.weight(1f)) { ScreenHeader(tr("Schedule")) { vm.more = null } }
             IconButton(onClick = {
                 val text = ScheduleExporter.text(days, location, config.display)
                 val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
@@ -103,7 +105,17 @@ fun ScheduleScreen(vm: SalahViewModel, modifier: Modifier) {
             }
         }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            items(days, key = { it.date.toEpochDay() }) { day -> DayRow(day, today, config.display.use24HourClock, lang) }
+            items(days, key = { it.date.toEpochDay() }) { day ->
+                DayRow(day, today, config.display.use24HourClock, lang, SunnahFast.reasons(day.date, config.display.hijriAdjustment))
+            }
+            item(key = "footnote") {
+                Text(
+                    tr(SunnahFast.FOOTNOTE),
+                    color = c.secondary,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 12.dp),
+                )
+            }
         }
     }
 }
@@ -111,7 +123,7 @@ fun ScheduleScreen(vm: SalahViewModel, modifier: Modifier) {
 private val DATE_W = 64.dp
 
 @Composable
-private fun DayRow(day: DaySchedule, today: LocalDate, use24: Boolean, lang: AppLanguage) {
+private fun DayRow(day: DaySchedule, today: LocalDate, use24: Boolean, lang: AppLanguage, fasts: List<SunnahFast>) {
     val c = palette
     val isToday = day.date == today
     Row(
@@ -127,6 +139,11 @@ private fun DayRow(day: DaySchedule, today: LocalDate, use24: Boolean, lang: App
         Column(Modifier.width(DATE_W)) {
             Text(AppText.shortDate(day.date, lang).substringBefore(",").substringBefore("،"), color = if (day.isFriday) (if (isToday) fg else c.accent) else dim, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
             Text(day.date.dayOfMonth.toString(), color = fg, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            if (fasts.isNotEmpty()) {
+                // "FAST", or the day's name (White day, Arafah, Ashura) when it has one.
+                val label = fasts.firstNotNullOfOrNull { it.dayName }?.let { AppText.t(lang, it) } ?: AppText.t(lang, "Fast")
+                Text(label, color = if (isToday) fg else c.accent, fontSize = 9.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            }
         }
         for (p in Prayer.entries) {
             val t = day.time(p)

@@ -54,7 +54,7 @@ fun RemindersScreen(vm: SalahViewModel, modifier: Modifier) {
             .verticalScroll(rememberScrollState()).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        Text(tr("Reminders"), color = c.text, fontSize = 26.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 4.dp))
+        ScreenHeader(tr("Reminders")) { vm.more = null }
 
         if (!Notifications.canPost(context)) {
             Panel {

@@ -36,6 +36,15 @@ object TimeFormatting {
         "${d.weekdayName}, ${d.dayOfMonth} ${d.monthName}" + if (includeYear) " ${d.year}" else ""
 
     /** "Fri, 25 Sep" */
+    /** Player time: "4:05", or "1:02:09" past an hour. Negative or unknown is "0:00". */
+    fun mediaTime(seconds: Long): String {
+        val s = seconds.coerceAtLeast(0)
+        val h = s / 3600
+        val m = (s % 3600) / 60
+        val sec = s % 60
+        return if (h > 0) "%d:%02d:%02d".format(Locale.ROOT, h, m, sec) else "%d:%02d".format(Locale.ROOT, m, sec)
+    }
+
     fun shortDate(d: LocalDate): String = "${d.weekdayName.take(3)}, ${d.dayOfMonth} ${d.monthName.take(3)}"
 }
 

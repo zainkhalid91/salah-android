@@ -8,6 +8,27 @@ This is the Android edition of [Salah](https://github.com/primayudantra/salah) b
 
 ## Features
 
+**Home**
+- A greeting, today's Gregorian and Hijri date, and the moment's main card: the next prayer with a countdown and a verse or hadith, or on Friday after Asr, the countdown to Maghrib and the last hour.
+- Widgets you choose and reorder: prayer times, du'a of the day, Quran (what's playing, or Al-Kahf on Friday, Al-Mulk at night, a short surah otherwise), sunnah fasting, kind word of the day and the Kind Words schedule.
+
+**Quran player**
+- All 114 surahs from six reciters (Mishary Alafasy, Abdul Rahman Al-Sudais, Saad Al-Ghamdi, Mahmoud Khalil Al-Husary, Maher Al-Muaiqly, Abdul Basit), streamed from mp3quran.net.
+- Search by name, meaning or number. Full Quran and Juz 'Amma playlists, plus your own.
+- Queue with play next, reorder and remove; repeat one or all; shuffle.
+- Keeps playing with the screen off, with lock screen, headphone and Bluetooth controls, and a mini player above the tabs.
+- Pauses when each prayer begins (optional, never during a call). Picks up where you left off.
+
+**Focus Mode**
+- At prayer time: a calm full-screen card over the lock screen, pause what's playing, and turn on Do Not Disturb. Done (or the auto close) undoes it.
+- On a call or already in Do Not Disturb, only a small nudge, then the card once you're free.
+- Choose the prayers, the auto close (10, 15 or 30 minutes) and each action. Off by default.
+
+**Kind Words and Du'a**
+- Gentle verses, hadith and du'as through the day, never within 45 minutes of a prayer, silent by default.
+- A verse with each early reminder, "Have you prayed?" after each prayer, Al-Kahf and the last hour on Friday, and du'as for the start and end of the work day.
+- A Du'a screen grouped by moment, with copy and notify.
+
 **Today**
 - The next prayer in large dot matrix type, with a live countdown. It switches to NOW when a prayer begins.
 - A coloured timeline of the day: Fajr, Sunrise, Dhuhr, Asr, Maghrib and Isha.
@@ -32,6 +53,7 @@ This is the Android edition of [Salah](https://github.com/primayudantra/salah) b
 **Schedule**
 - The week or the month at a glance, with today highlighted.
 - Share the schedule as text.
+- Sunnah fasts are tagged: Mondays and Thursdays, the White Days, Arafah and Ashura (never in Ramadan, on Eid or the days of Tashriq).
 
 **Language**
 - English or Arabic (العربية), picked the first time the app opens and changeable in Settings.
@@ -52,7 +74,7 @@ This is the Android edition of [Salah](https://github.com/primayudantra/salah) b
 
 **Colours and theme**
 - Light, dark or follow the system.
-- 10 colour themes: Crimson (the original), Emerald, Teal, Sapphire, Indigo, Amethyst, Rose, Amber, Olive and Graphite.
+- 13 colour themes: Crimson (the original), Emerald, Teal, Sapphire, Indigo, Amethyst, Rose, Amber, Olive, Graphite, and the earth tones Forest, Earth and Clay.
 - On Android 12 and newer there is also **Wallpaper**, which uses your Material You colours.
 
 **Calculation**
@@ -66,7 +88,9 @@ This is the Android edition of [Salah](https://github.com/primayudantra/salah) b
 2. Open it, and allow installs from your browser or file manager when Android asks.
 3. Open Salah, set your location, and allow notifications for reminders.
 
-The APK is signed with a debug key so it installs straight from GitHub. That is fine for personal use, but it is not a Play Store build.
+**Updates are automatic.** Every push to `main` publishes a new signed release. The app checks when you open it and once a day, downloads the update in the background, and shows a banner to install it (or installs it a few minutes after you leave the app). The first update asks you to allow installs from Salah once; after that Android 12 and newer update it without asking. Settings → Updates has Check now and both switches.
+
+> **Upgrading from 1.3.0 or earlier:** those builds were signed with a throwaway key, so Android won't install the new version over them. Uninstall the old app once, then install the latest `Salah.apk`. Updates are automatic from then on.
 
 ## Build it yourself
 
@@ -80,6 +104,12 @@ cd salah-android
 ```
 
 Or open the folder in Android Studio and press Run.
+
+### Releases and signing
+
+`.github/workflows/android.yml` builds every push to `main` with versionCode `100 + run number`, signs it with the release key and publishes a GitHub release with `Salah.apk` and `latest.json` (version, download URL, SHA-256 and the commit list). Installed apps read `releases/latest/download/latest.json`.
+
+The key lives in four repository secrets: `SALAH_KEYSTORE_BASE64` (the `.jks`, base64), `SALAH_KEYSTORE_PASSWORD`, `SALAH_KEY_ALIAS` and `SALAH_KEY_PASSWORD`. Without them CI still builds, with a debug key, but doesn't publish. Locally, `keystore.properties` (gitignored) points at `signing/salah-release.jks`. Keep a backup of both: a release signed with any other key can't update installed apps.
 
 ## Project layout
 
@@ -105,6 +135,8 @@ The config is the same JSON file format as the macOS and Windows apps.
 - **Prayer calculation:** ported from [adhan-swift](https://github.com/batoulapps/adhan-swift) by Batoul Apps (MIT License). The notice is in `core/src/main/kotlin/salah/core/adhan/Adhan.kt`.
 - **Pixel font:** [Doto](https://github.com/oliverlalan/Doto), SIL Open Font License 1.1 (`docs/OFL-Doto.txt`)
 - **Azan clip:** from islamcan.com, as supplied by the project owner (`app/src/main/res/raw/salah_azan.mp3`)
+- **Quran recitations:** streamed from [mp3quran.net](https://mp3quran.net); surah names and meanings from Tanzil, as in the macOS app
+- **Focus Mode, Kind Words, Quran player and the Home screen:** ported from Salah for macOS 1.3–1.5
 - **Location search:** [Open-Meteo](https://open-meteo.com/) geocoding and [BigDataCloud](https://www.bigdatacloud.com/) reverse geocoding
 
 ## License

@@ -1,7 +1,21 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
+
+/**
+ * Release signing: CI passes the keystore through SALAH_* environment variables (from repo
+ * secrets); locally, keystore.properties (gitignored) points at signing/salah-release.jks.
+ * Every release must use the same key, or updates can't install over each other.
+ */
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("keystore.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+fun signingValue(env: String, prop: String): String? = System.getenv(env)?.takeIf { it.isNotBlank() } ?: keystoreProps.getProperty(prop)
+val releaseStore = signingValue("SALAH_KEYSTORE_PATH", "storeFile")?.let { rootProject.file(it) }?.takeIf { it.exists() }
 
 android {
     namespace = "com.zainkhalid.salah"
@@ -13,15 +27,27 @@ android {
         applicationId = "com.zainkhalid.salah"
         minSdk = 26
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.3.0"
+        // CI sets these per build (-PversionCode=…), so every push is a newer version.
+        versionCode = (project.findProperty("versionCode") as String?)?.toInt() ?: 5
+        versionName = (project.findProperty("versionName") as String?) ?: "1.4.0"
+    }
+
+    signingConfigs {
+        if (releaseStore != null) {
+            create("release") {
+                storeFile = releaseStore
+                storePassword = signingValue("SALAH_KEYSTORE_PASSWORD", "storePassword")
+                keyAlias = signingValue("SALAH_KEY_ALIAS", "keyAlias")
+                keyPassword = signingValue("SALAH_KEY_PASSWORD", "keyPassword")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            // Debug key, so the APK built by CI installs directly.
-            signingConfig = signingConfigs.getByName("debug")
+            // Without the release key (a fork, a pull request), fall back to the debug key so it still builds.
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -48,4 +74,6 @@ dependencies {
     implementation(libs.androidx.material.icons.core)
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.session)
 }

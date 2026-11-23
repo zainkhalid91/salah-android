@@ -86,7 +86,7 @@ fun QiblaScreen(vm: SalahViewModel, modifier: Modifier) {
             .verticalScroll(rememberScrollState()).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text(tr("Qibla"), color = c.text, fontSize = 26.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 4.dp))
+        ScreenHeader(tr("Qibla")) { vm.more = null }
         if (location == null) {
             Panel {
                 SettingRow(tr("Set a location to find the Qibla"), tr("Tap to set your location"), onClick = { vm.showLocationSheet = true })

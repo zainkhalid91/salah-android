@@ -1,5 +1,10 @@
 name: Android
 
+# Every push to main: test, build a signed APK with a higher versionCode, and publish it as the
+# latest GitHub release with a latest.json beside it. Installed apps read
+# releases/latest/download/latest.json and update themselves (app/.../update/AppUpdater.kt).
+# Pull requests only test and build.
+
 on:
   push:
     branches: [main]
@@ -7,18 +12,28 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "Publish a GitHub release with this tag (e.g. v1.0.0). Leave empty to only build."
+        description: "Publish with this tag instead of the automatic one (e.g. v1.4.0). Leave empty for the automatic tag."
         required: false
         default: ""
 
 permissions:
   contents: write
 
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # Bump for a new feature release; every build adds its own number.
+  BASE_VERSION: "1.4.0"
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # release notes come from the commits since the last release
 
       - uses: actions/setup-java@v4
         with:
@@ -32,9 +47,39 @@ jobs:
           chmod +x gradlew
           ./gradlew --no-daemon :core:test
 
-      - name: Build APK
+      - name: Version
+        id: version
         run: |
-          ./gradlew --no-daemon assembleRelease
+          # Above every earlier release (the last hand-made one was versionCode 4).
+          CODE=$((100 + GITHUB_RUN_NUMBER))
+          echo "code=$CODE" >> "$GITHUB_OUTPUT"
+          echo "name=$BASE_VERSION (build $GITHUB_RUN_NUMBER)" >> "$GITHUB_OUTPUT"
+          echo "tag=${{ inputs.release_tag || format('v{0}-{1}', env.BASE_VERSION, github.run_number) }}" >> "$GITHUB_OUTPUT"
+
+      - name: Release key
+        id: key
+        env:
+          SALAH_KEYSTORE_BASE64: ${{ secrets.SALAH_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$SALAH_KEYSTORE_BASE64" ]; then
+            echo "$SALAH_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/salah-release.jks"
+            echo "path=$RUNNER_TEMP/salah-release.jks" >> "$GITHUB_OUTPUT"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::No SALAH_KEYSTORE_BASE64 secret: the APK is signed with a throwaway debug key and is not published."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build APK
+        env:
+          SALAH_KEYSTORE_PATH: ${{ steps.key.outputs.path }}
+          SALAH_KEYSTORE_PASSWORD: ${{ secrets.SALAH_KEYSTORE_PASSWORD }}
+          SALAH_KEY_ALIAS: ${{ secrets.SALAH_KEY_ALIAS }}
+          SALAH_KEY_PASSWORD: ${{ secrets.SALAH_KEY_PASSWORD }}
+        run: |
+          ./gradlew --no-daemon assembleRelease \
+            -PversionCode=${{ steps.version.outputs.code }} \
+            "-PversionName=${{ steps.version.outputs.name }}"
           cp app/build/outputs/apk/release/app-release.apk Salah.apk
 
       - uses: actions/upload-artifact@v4
@@ -42,13 +87,45 @@ jobs:
           name: Salah-apk
           path: Salah.apk
 
+      - name: Release notes and latest.json
+        if: steps.key.outputs.signed == 'true' && github.event_name != 'pull_request'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          CODE: ${{ steps.version.outputs.code }}
+          NAME: ${{ steps.version.outputs.name }}
+        run: |
+          PREV=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
+          if [ -n "$PREV" ]; then RANGE="$PREV..HEAD"; else RANGE="-n 15"; fi
+          git log $RANGE --no-merges --pretty='- %s' > notes.md
+          [ -s notes.md ] || echo "- Maintenance build" > notes.md
+          python3 - <<'EOF'
+          import hashlib, json, os
+          sha = hashlib.sha256(open("Salah.apk", "rb").read()).hexdigest()
+          repo = os.environ["GITHUB_REPOSITORY"]
+          json.dump({
+              "versionCode": int(os.environ["CODE"]),
+              "versionName": os.environ["NAME"],
+              "apk": f"https://github.com/{repo}/releases/download/{os.environ['TAG']}/Salah.apk",
+              "sha256": sha,
+              "notes": open("notes.md").read().strip(),
+          }, open("latest.json", "w"), indent=2)
+          EOF
+          cat latest.json
+
       - name: Publish release
-        if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ inputs.release_tag }}
-          target_commitish: ${{ github.sha }}
-          name: Salah for Android ${{ inputs.release_tag }}
-          files: Salah.apk
-          body: |
-            Install `Salah.apk` on any Android 8.0+ phone (allow installs from your browser or file manager when asked).
+        if: steps.key.outputs.signed == 'true' && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          NAME: ${{ steps.version.outputs.name }}
+        run: |
+          {
+            echo "Install \`Salah.apk\` on any Android 8.0+ phone. Installed apps update themselves from here."
+            echo
+            cat notes.md
+          } > body.md
+          gh release create "$TAG" Salah.apk latest.json \
+            --target "$GITHUB_SHA" \
+            --title "Salah for Android $NAME" \
+            --notes-file body.md \
+            --latest

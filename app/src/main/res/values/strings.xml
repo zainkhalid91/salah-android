@@ -8,4 +8,7 @@
     <string name="widget_calendar_description">This month in Hijri and Gregorian dates, with Islamic days marked</string>
     <string name="channel_reminders">Prayer reminders</string>
     <string name="channel_azan">Azan at prayer time</string>
+    <string name="channel_focus">Focus Mode card</string>
+    <string name="channel_nudge">Focus Mode nudges</string>
+    <string name="channel_updates">App updates</string>
 </resources>

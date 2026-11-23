@@ -202,6 +202,10 @@ data class SalahConfig(
     val reminders: ReminderSettings = ReminderSettings(),
     val calendar: CalendarSettings = CalendarSettings(),
     val launchAtLogin: Boolean = true,
+    val focusMode: salah.core.focusmode.FocusModeSettings = salah.core.focusmode.FocusModeSettings(),
+    val quran: salah.core.quran.QuranSettings = salah.core.quran.QuranSettings(),
+    val kindWords: salah.core.kindwords.KindWordsSettings = salah.core.kindwords.KindWordsSettings(),
+    val home: salah.core.home.HomeSettings = salah.core.home.HomeSettings(),
 ) {
     val methodName: String get() = calculation.methodName(location)
 
@@ -209,10 +213,15 @@ data class SalahConfig(
         location = location?.normalized(),
         display = display.normalized(),
         reminders = reminders.normalized(),
+        focusMode = focusMode.normalized(),
+        quran = quran.normalized(),
+        kindWords = kindWords.normalized(),
+        home = home.normalized(),
     )
 
     companion object {
-        const val CURRENT_SCHEMA_VERSION = 1
+        /** Matches the macOS app (3: focusMode, quran, kindWords, home). New keys default, so no data step. */
+        const val CURRENT_SCHEMA_VERSION = 3
         val DEFAULT = SalahConfig()
     }
 }

@@ -30,6 +30,10 @@ enum class AccentColor(
     AMBER("amber", "Amber", 0xFF9A4F08, 0xFFB8620C, 0xFF6B3906, 0xFFFFB45C),
     OLIVE("olive", "Olive", 0xFF5C5A12, 0xFF77741A, 0xFF403E0C, 0xFFD8CF5C),
     GRAPHITE("graphite", "Graphite", 0xFF2B2F36, 0xFF3D434C, 0xFF24272C, 0xFFB8C2CC),
+    // Earth tones, same values as the macOS app's Forest, Earth and Clay themes.
+    FOREST("forest", "Forest", 0xFF2F4A3A, 0xFF2F5A41, 0xFF1C2E24, 0xFF8FC1A2),
+    EARTH("earth", "Earth", 0xFF5A4A32, 0xFF5E6B3A, 0xFF3E3324, 0xFFB7C48E),
+    CLAY("clay", "Clay", 0xFF8C4425, 0xFF9A4A26, 0xFF6E361E, 0xFFE79A76),
     WALLPAPER("wallpaper", "Wallpaper", 0xFFA10F24, 0xFFC21D35, 0xFF7E0C1C, 0xFFF06377);
 
     /** Timeline and accent for a mode. */

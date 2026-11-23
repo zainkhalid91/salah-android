@@ -2,20 +2,27 @@ package com.zainkhalid.salah.ui
 
 import android.Manifest
 import android.os.Build
+import android.content.Intent
 import android.os.Bundle
+import androidx.activity.compose.BackHandler
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -38,11 +45,17 @@ import salah.core.AppLanguage
 import salah.core.ThemeSetting
 
 class MainActivity : ComponentActivity() {
+    private var vm: SalahViewModel? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             val vm: SalahViewModel = viewModel()
+            if (this.vm == null) {
+                this.vm = vm
+                if (savedInstanceState == null) handleOpen(intent)
+            }
             val config by vm.config.collectAsStateWithLifecycle()
             val accent by vm.accent.collectAsStateWithLifecycle()
             val dark = when (config.display.theme) {
@@ -59,6 +72,26 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleOpen(intent)
+    }
+
+    /** Notifications open a specific place: the Quran player or the update. */
+    private fun handleOpen(intent: Intent?) {
+        val vm = vm ?: return
+        when (intent?.getStringExtra(EXTRA_OPEN)) {
+            OPEN_QURAN -> vm.tab = Tab.QURAN
+            OPEN_UPDATE -> vm.open(MoreDest.SETTINGS)
+        }
+    }
+
+    companion object {
+        const val EXTRA_OPEN = "open"
+        const val OPEN_QURAN = "quran"
+        const val OPEN_UPDATE = "update"
+    }
 }
 
 @Composable
@@ -73,58 +106,79 @@ private fun SalahRoot(vm: SalahViewModel) {
         }
     }
 
+    BackHandler(enabled = vm.tab != Tab.HOME || vm.more != null) {
+        if (vm.tab == Tab.MORE && vm.more != null) vm.more = null else vm.tab = Tab.HOME
+    }
+
     Scaffold(
         containerColor = c.background,
         bottomBar = {
-            NavigationBar(containerColor = c.display) {
-                for (tab in Tab.entries) {
-                    NavigationBarItem(
-                        selected = vm.tab == tab,
-                        onClick = {
-                            vm.tab = tab
-                            if (tab != Tab.TODAY) {
-                                vm.detailPrayer = null
-                                vm.detailExtra = null
-                            }
-                        },
-                        icon = {
-                            Icon(
-                                when (tab) {
-                                    Tab.TODAY -> Icons.Filled.Home
-                                    Tab.CALENDAR -> Icons.Filled.DateRange
-                                    Tab.QIBLA -> QiblaIcon
-                                    Tab.SCHEDULE -> Icons.Filled.List
-                                    Tab.REMINDERS -> Icons.Filled.Notifications
-                                    Tab.SETTINGS -> Icons.Filled.Settings
-                                },
-                                contentDescription = null,
-                            )
-                        },
-                        label = {
-                            Text(tr(tab.title), maxLines = 1)
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = c.onAccent,
-                            indicatorColor = c.accent,
-                            selectedTextColor = c.text,
-                            unselectedIconColor = c.secondary,
-                            unselectedTextColor = c.secondary,
-                        ),
-                    )
+            Column {
+                val playback by vm.quran.state.collectAsStateWithLifecycle()
+                if (playback.queue != null && config.quran.showInMenuBar && vm.tab != Tab.QURAN) {
+                    MiniPlayer(vm, playback) { vm.tab = Tab.QURAN }
+                }
+                NavigationBar(containerColor = c.display) {
+                    for (tab in Tab.entries) {
+                        NavigationBarItem(
+                            selected = vm.tab == tab,
+                            onClick = {
+                                // Tapping More again goes back to its list.
+                                if (tab == Tab.MORE && vm.tab == Tab.MORE) vm.more = null
+                                vm.tab = tab
+                                if (tab != Tab.TODAY) {
+                                    vm.detailPrayer = null
+                                    vm.detailExtra = null
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    when (tab) {
+                                        Tab.HOME -> Icons.Filled.Home
+                                        Tab.TODAY -> Icons.Filled.Star
+                                        Tab.QURAN -> PlayerIcons.Book
+                                        Tab.CALENDAR -> Icons.Filled.DateRange
+                                        Tab.MORE -> Icons.Filled.Menu
+                                    },
+                                    contentDescription = null,
+                                )
+                            },
+                            label = { Text(tr(tab.title), maxLines = 1) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = c.onAccent,
+                                indicatorColor = c.accent,
+                                selectedTextColor = c.text,
+                                unselectedIconColor = c.secondary,
+                                unselectedTextColor = c.secondary,
+                            ),
+                        )
+                    }
                 }
             }
         },
     ) { padding ->
         val modifier = Modifier.padding(padding)
-        when (vm.tab) {
-            Tab.TODAY -> TodayScreen(vm, modifier)
-            Tab.CALENDAR -> CalendarScreen(vm, modifier)
-            Tab.QIBLA -> QiblaScreen(vm, modifier)
-            Tab.SCHEDULE -> ScheduleScreen(vm, modifier)
-            Tab.REMINDERS -> RemindersScreen(vm, modifier)
-            Tab.SETTINGS -> SettingsScreen(vm, modifier)
+        Box(Modifier.fillMaxSize()) {
+            when (vm.tab) {
+                Tab.HOME -> HomeScreen(vm, modifier)
+                Tab.TODAY -> TodayScreen(vm, modifier)
+                Tab.QURAN -> QuranScreen(vm, modifier)
+                Tab.CALENDAR -> CalendarScreen(vm, modifier)
+                Tab.MORE -> when (vm.more) {
+                    null -> MoreScreen(vm, modifier)
+                    MoreDest.QIBLA -> QiblaScreen(vm, modifier)
+                    MoreDest.SCHEDULE -> ScheduleScreen(vm, modifier)
+                    MoreDest.REMINDERS -> RemindersScreen(vm, modifier)
+                    MoreDest.FOCUS -> FocusModeScreen(vm, modifier)
+                    MoreDest.KIND_WORDS -> KindWordsScreen(vm, modifier)
+                    MoreDest.DUA -> DuaScreen(vm, modifier)
+                    MoreDest.SETTINGS -> SettingsScreen(vm, modifier)
+                }
+            }
+            UpdateBanner(vm, Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(horizontal = 12.dp, vertical = 6.dp))
         }
     }
+    if (vm.showCustomizeHome) CustomizeHomeDialog(vm)
     if (vm.showLocationSheet) LocationSheet(vm)
     if (config.display.language == null) {
         val phone = LocalConfiguration.current.locales[0]?.language

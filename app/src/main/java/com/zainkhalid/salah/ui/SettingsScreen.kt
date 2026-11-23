@@ -52,7 +52,9 @@ fun SettingsScreen(vm: SalahViewModel, modifier: Modifier) {
             .verticalScroll(rememberScrollState()).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        Text(tr("Settings"), color = c.text, fontSize = 26.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 4.dp))
+        ScreenHeader(tr("Settings")) { vm.more = null }
+
+        UpdatesPanel(vm)
 
         Panel(title = tr("LANGUAGE")) {
             Segmented(
@@ -172,9 +174,13 @@ fun SettingsScreen(vm: SalahViewModel, modifier: Modifier) {
             SettingRow(tr("Original macOS app"), "Prima Yudantra · github.com/primayudantra/salah", onClick = {
                 open(context, "https://github.com/primayudantra/salah")
             })
+            SettingRow(tr("Website"), "salah.techwithprima.com", onClick = { open(context, "https://salah.techwithprima.com") })
+            SettingRow(tr("Discussions"), tr("Ideas and questions"), onClick = { open(context, "https://github.com/primayudantra/salah/discussions") })
+            SettingRow(tr("Report an issue"), "github.com/primayudantra/salah/issues", onClick = { open(context, "https://github.com/primayudantra/salah/issues") })
             SettingRow(tr("Source code"), "github.com/zainkhalid91/salah-android", onClick = {
                 open(context, "https://github.com/zainkhalid91/salah-android")
             })
+            SettingRow(tr("Quran recitations"), "mp3quran.net")
             SettingRow(tr("Pixel font"), "Doto, SIL Open Font License 1.1")
         }
     }

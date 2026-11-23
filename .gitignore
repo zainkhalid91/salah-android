@@ -10,3 +10,9 @@
 .cxx
 local.properties
 /core/build
+
+# Release signing key: never commit it. CI gets it from repository secrets.
+/signing/
+keystore.properties
+*.jks
+*.keystore
