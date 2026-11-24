@@ -31,16 +31,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # release notes come from the commits since the last release
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
 
       - name: Core tests
         run: |
@@ -82,7 +82,7 @@ jobs:
             "-PversionName=${{ steps.version.outputs.name }}"
           cp app/build/outputs/apk/release/app-release.apk Salah.apk
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Salah-apk
           path: Salah.apk
